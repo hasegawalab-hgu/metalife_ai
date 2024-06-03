@@ -1,1 +1,1 @@
-# Gather_Lab
+# Gather_Lab（研究室のコミュニケーションツール）
