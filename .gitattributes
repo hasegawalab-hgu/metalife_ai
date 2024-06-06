@@ -159,3 +159,9 @@ Assets/Plugins/**       linguist-vendored
 
 # Exceptions for .asset files such as lightning pre-baking
 LightningData.asset     binary
+
+# テキストファイルの改行コードを自動で管理する
+* text=auto
+
+# C#ファイルは常にLFを使用する
+*.cs text eol=lf

@@ -94,7 +94,6 @@ namespace CustomConnectionHandler {
 
             onInitialized += async runner =>
             {
-                Debug.Log(runner);
                 if (runner.IsServer || runner.IsSharedModeMasterClient)
                 {
                     await runner.SpawnAsync(_app);

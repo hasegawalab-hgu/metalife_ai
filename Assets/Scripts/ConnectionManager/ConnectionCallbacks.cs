@@ -49,11 +49,11 @@ namespace CustomConnectionHandler {
             if (Input.GetKey(KeyCode.D)) {
                 inputs.Buttons.Set(MyNetworkInput.BUTTON_RIGHT, true);
             }
-
+            /*
             if (Input.GetKey(KeyCode.Space)) {
                 inputs.Buttons.Set(MyNetworkInput.BUTTON_JUMP, true);
             }
-
+            
             if (Input.GetKey(KeyCode.E)) {
                 inputs.Buttons.Set(MyNetworkInput.BUTTON_ACTION1, true);
             }
@@ -61,7 +61,7 @@ namespace CustomConnectionHandler {
             if (Input.GetMouseButton(0)) {
                 inputs.Buttons.Set(MyNetworkInput.BUTTON_FIRE, true);
             }
- 
+            */
             input.Set(inputs);
         }
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) {}
