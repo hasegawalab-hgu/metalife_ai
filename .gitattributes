@@ -165,3 +165,6 @@ LightningData.asset     binary
 
 # C#ファイルは常にLFを使用する
 *.cs text eol=lf
+
+# 特定のファイルに対するLFSの設定
+"Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset" filter=lfs diff=lfs merge=lfs -text
