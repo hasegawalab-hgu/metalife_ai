@@ -9,6 +9,11 @@ public class Launcher : MonoBehaviour {
     [SerializeField] private TMP_Text _text;
     [SerializeField] private GameObject _launchButton;
 
+    void Awake()
+    {
+
+        _text.text = "Hello, ";
+    }
     public void Launch()
     {
         _text.text = "Connecting to Lobby";

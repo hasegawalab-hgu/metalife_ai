@@ -1,5 +1,6 @@
 using UnityEngine;
 using Fusion;
+using PlayFab.ClientModels;
 
 public class SharedLobbySpawner : NetworkBehaviour {
     

@@ -19,6 +19,7 @@ public class ClientChatListener : MonoBehaviour, IChatClientListener
         // ChatClientの初期化
         chatClient = new ChatClient(this);
         chatClient.Connect(chatAppId, "2.17.0", new AuthenticationValues("test"));
+        
     }
 
     void Update()
@@ -46,7 +47,7 @@ public class ClientChatListener : MonoBehaviour, IChatClientListener
         Debug.Log("Connected to chat.");
 
         // デフォルトのチャットチャンネルに参加
-        chatClient.Subscribe(new string[] { defaultChannel });
+        chatClient.Subscribe(defaultChannel , creationOptions: new ChannelCreationOptions { PublishSubscribers = true });
     }
 
     public void OnChatStateChange(ChatState state)
@@ -56,7 +57,7 @@ public class ClientChatListener : MonoBehaviour, IChatClientListener
 
     public void OnGetMessages(string channelName, string[] senders, object[] messages)
     {
-        outputField.SetText(messages[0].ToString());
+        outputField.SetText(senders[0] + " : " + messages[0].ToString());
     }
 
     public void OnPrivateMessage(string sender, object message, string channelName)

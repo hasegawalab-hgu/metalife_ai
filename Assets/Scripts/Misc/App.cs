@@ -26,10 +26,10 @@ public class App : NetworkBehaviour
             connection.Runner.Shutdown();
     }
 
-    /*
+    
     public static implicit operator App(NetworkObject v)
     {
         throw new NotImplementedException();
     }
-    */
+    
 }

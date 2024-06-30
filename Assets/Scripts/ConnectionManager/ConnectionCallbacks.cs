@@ -16,7 +16,6 @@ namespace CustomConnectionHandler {
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
         {
             Debug.Log($"{player} Joined");
-
             ActionOnPlayerJoined?.Invoke(runner, player);
         }
 
