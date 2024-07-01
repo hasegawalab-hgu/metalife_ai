@@ -35,7 +35,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         fusion.SetActive(true);
         Debug.Log("カスタムIDでのログイン成功");
 
-        //playerData.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
+        playFabIdObj.playFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
     }
 
     void OnLoginWithCustomIDFailure(PlayFabError error)
@@ -62,7 +62,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
     {
         Debug.Log("ユーザー名とパスワードでのログイン成功");
 
-        //playerData.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
+        playFabIdObj.playFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
 
         if(result.InfoResultPayload.UserData.Count == 0 || string.IsNullOrEmpty(result.InfoResultPayload.UserData["DisplayName"].Value) || string.IsNullOrEmpty(result.InfoResultPayload.UserData["GraduationYear"].Value))
         {

@@ -6,8 +6,7 @@ using TMPro;
 
 public class PlayerData : NetworkBehaviour
 {
-    // Networkedにしてはいけない、他のクライアントと共有しない
-    //public string PlayFabId;
+    public string PlayFabId;
 
     public GetPlayerCombinedInfoRequestParams PlayerInfoParams;
 
@@ -33,7 +32,7 @@ public class PlayerData : NetworkBehaviour
     // }
     private void OnGetPlayerCombinedInfo()
     {
-        var request = new GetPlayerCombinedInfoRequest{InfoRequestParameters = PlayerInfoParams};
+        var request = new GetPlayerCombinedInfoRequest{PlayFabId = this.PlayFabId, InfoRequestParameters = PlayerInfoParams};
         PlayFabClientAPI.GetPlayerCombinedInfo(request, OnGetPlayerCombinedInfoSuccess, error => {Debug.Log("PlayerCombinedInfoの取得に失敗");});
     }
     private void OnGetPlayerCombinedInfoSuccess(GetPlayerCombinedInfoResult result)

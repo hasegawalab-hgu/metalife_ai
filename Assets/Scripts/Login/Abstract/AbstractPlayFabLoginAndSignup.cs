@@ -18,7 +18,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
     [SerializeField] protected GameObject fusion;
     public GetPlayerCombinedInfoRequestParams playerInfoParams;
 
-    public PlayerData playerData {get; set;}
+    public PlayFabId playFabIdObj {get; set;}
 
     private void Awake()
     {
@@ -28,7 +28,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
         // playerInfoParams.GetPlayerProfile = true;
 
 
-        //playerData = GameObject.Find("PlayerData").GetComponent<PlayerData>();
+        playFabIdObj = GameObject.Find("PlayFabId").GetComponent<PlayFabId>();
     }
 
     protected void LinkCustomId(string customId)
