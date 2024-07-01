@@ -7,7 +7,7 @@ using TMPro;
 public class PlayerData : NetworkBehaviour
 {
     // Networkedにしてはいけない、他のクライアントと共有しない
-    public static string PlayFabId;
+    //public string PlayFabId;
 
     public GetPlayerCombinedInfoRequestParams PlayerInfoParams;
 
@@ -33,15 +33,15 @@ public class PlayerData : NetworkBehaviour
     // }
     private void OnGetPlayerCombinedInfo()
     {
-        var request = new GetPlayerCombinedInfoRequest{PlayFabId = PlayFabId, InfoRequestParameters = PlayerInfoParams};
+        var request = new GetPlayerCombinedInfoRequest{InfoRequestParameters = PlayerInfoParams};
         PlayFabClientAPI.GetPlayerCombinedInfo(request, OnGetPlayerCombinedInfoSuccess, error => {Debug.Log("PlayerCombinedInfoの取得に失敗");});
     }
     private void OnGetPlayerCombinedInfoSuccess(GetPlayerCombinedInfoResult result)
-{
-    DisplayName = result.InfoResultPayload.UserData["DisplayName"].Value;
-    GraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
-    KeepLoginInfo = result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True" ? true : false;
+    {
+        DisplayName = result.InfoResultPayload.UserData["DisplayName"].Value;
+        GraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
+        KeepLoginInfo = result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True" ? true : false;
 
-    TextDisplayName.SetText(DisplayName);
-}
+        TextDisplayName.SetText(DisplayName);
+    }
 }
