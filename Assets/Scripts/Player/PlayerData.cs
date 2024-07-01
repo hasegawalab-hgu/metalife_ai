@@ -6,7 +6,8 @@ using TMPro;
 
 public class PlayerData : NetworkBehaviour
 {
-    public string PlayFabId;
+    [Networked]
+    public string PlayFabId {get; set;}
 
     public GetPlayerCombinedInfoRequestParams PlayerInfoParams;
 
@@ -23,13 +24,15 @@ public class PlayerData : NetworkBehaviour
 
     void Start()
     {
-        OnGetPlayerCombinedInfo();
+        if(this.PlayFabId == GameObject.Find("PlayFabId").GetComponent<PlayFabId>().playFabId)
+        {
+            OnGetPlayerCombinedInfo();
+        }
+
+        // 他ユーザーのテキストUIを設定
+        TextDisplayName.SetText(DisplayName);
     }
-    // public override void Spawned()
-    // {
-    //     TextDisplayName.SetText(DisplayName);
-    //     Debug.Log(TextDisplayName.text + ": " + DisplayName);
-    // }
+
     private void OnGetPlayerCombinedInfo()
     {
         var request = new GetPlayerCombinedInfoRequest{PlayFabId = this.PlayFabId, InfoRequestParameters = PlayerInfoParams};
@@ -40,7 +43,8 @@ public class PlayerData : NetworkBehaviour
         DisplayName = result.InfoResultPayload.UserData["DisplayName"].Value;
         GraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
         KeepLoginInfo = result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True" ? true : false;
-
+        
+        // 自分のテキストUIを設定
         TextDisplayName.SetText(DisplayName);
     }
 }

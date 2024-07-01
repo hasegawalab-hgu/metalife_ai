@@ -16,6 +16,7 @@ namespace CustomConnectionHandler {
 
         [SerializeField] private App _app;
         [SerializeField] private ConnectionData _defaultLobby;
+        [SerializeField] private NetworkPrefabRef playerPrefab;
         
         private ConnectionContainer _lobbyConnection = new ConnectionContainer();
         private ConnectionContainer _dungeonConnection = new ConnectionContainer();
@@ -59,7 +60,8 @@ namespace CustomConnectionHandler {
             var connection = connectionData.Target == Lobby ? _lobbyConnection : _dungeonConnection;
             connection.ActiveConnection = connectionData;
 
-            var gameMode = connectionData.Target == Lobby ? GameMode.Shared : GameMode.AutoHostOrClient;
+            // var gameMode = connectionData.Target == Lobby ? GameMode.Shared : GameMode.AutoHostOrClient;
+            var gameMode = GameMode.Shared;
             var sceneInfo = new NetworkSceneInfo();
             if (connectionData.Target == Lobby)
             {
@@ -73,6 +75,7 @@ namespace CustomConnectionHandler {
                 var child = new GameObject(connection.ActiveConnection.ID.ToString());
                 child.transform.SetParent(transform);
                 connection.Runner = child.AddComponent<NetworkRunner>();
+                child.AddComponent<PlayerSpawner>().enabled = true;
             }
 
             if (connection.Callback == default)

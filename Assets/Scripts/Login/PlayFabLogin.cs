@@ -7,6 +7,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
 {
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField passwordInput;
+    private bool keepLoginInfo;
 
     void Start()
     {
@@ -31,11 +32,14 @@ public class PlayFabLogin : PlayFabLoginAndSignup
 
     void OnLoginWithCustomIDSuccess(LoginResult result)
     {
-        loginUI.SetActive(false);
-        fusion.SetActive(true);
         Debug.Log("カスタムIDでのログイン成功");
 
-        playFabIdObj.playFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
+        if(result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True")
+        {
+            loginUI.SetActive(false);
+            fusion.SetActive(true);
+            playFabIdObj.playFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
+        }
     }
 
     void OnLoginWithCustomIDFailure(PlayFabError error)

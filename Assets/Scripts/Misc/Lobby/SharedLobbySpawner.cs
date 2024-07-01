@@ -9,7 +9,5 @@ public class SharedLobbySpawner : NetworkBehaviour {
     public override void Spawned()
     {
         NetworkObject localPlayer = this.Runner.Spawn(_character, Vector3.zero, inputAuthority: this.Runner.LocalPlayer);
-        localPlayer.GetComponent<PlayerData>().PlayFabId = GameObject.Find("PlayFabId").GetComponent<PlayFabId>().playFabId;
-        Debug.Log(localPlayer.GetComponent<PlayerData>().PlayFabId);
     }
 }
