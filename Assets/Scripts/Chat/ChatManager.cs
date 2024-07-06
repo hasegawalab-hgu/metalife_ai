@@ -2,6 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
+
+[Serializable]
+public class ChatStringData
+{
+    public string Timestamp;
+    public string Channel;
+    public string ChannelType;
+    public string Sender;
+    public string Receiver;
+    public string Content;
+}
 
 public class ChatManager : MonoBehaviour
 {
@@ -27,4 +39,6 @@ public class ChatManager : MonoBehaviour
             inputField.text = ""; // 入力フィールドをクリア
         }
     }
+
+    
 }

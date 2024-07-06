@@ -58,9 +58,11 @@
     },
     "dotnet.defaultSolution": "Gather_Lab.sln",
 
-    "omnisharp.useModernNet": true,
+    "omnisharp.enableRoslynAnalyzers": false,
+    "omnisharp.enableEditorConfigSupport": false,
+    "omnisharp.enableDecompilationSupport": false,
+    "omnisharp.useModernNet": false,
     "omnisharp.path": "latest",
-    "omnisharp.projectLoadTimeout": 60,
     "omnisharp.loggingLevel": "debug",
     "omnisharp.autoStart": true,
     "omnisharp.useGlobalMono": "always"
