@@ -1,6 +1,8 @@
 using System.Diagnostics.Tracing;
 using Fusion;
 using UnityEngine;
+using PlayFab;
+using PlayFab.ClientModels;
 
 public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
 {
@@ -15,8 +17,13 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                 PlayerPrefab = GameObject.Find("PlayerPrefabs").GetComponent<PlayerPrefabs>().playerPrefabs[0];
             }
             var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(0, 0, 0), inputAuthority: this.Runner.LocalPlayer);
-            localPlayer.GetComponent<PlayerData>().PlayFabId = GameObject.Find("PlayFabId").GetComponent<PlayFabId>().playFabId;
+            localPlayer.GetComponent<PlayerData>().PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
+            localPlayer.name = "LocalPlayer";
             Debug.Log(localPlayer.GetComponent<PlayerData>().PlayFabId);
+        }
+        else
+        {
+
         }
     }
 }

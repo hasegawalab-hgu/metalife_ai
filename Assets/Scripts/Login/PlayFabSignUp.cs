@@ -30,13 +30,14 @@ public class PlayFabSignUp : PlayFabLoginAndSignup
         messageText.SetText(successMessage);
         messageText.color = Color.green;
 
+
         OnSwitchToLogin();
     }
 
 
     void OnRegisterFailure(PlayFabError error)
     {
-        string failedMessage = "Failed: " + error.GenerateErrorReport().Split(':')[2];
+        string failedMessage = "Failed: " + error.GenerateErrorReport();
         Debug.LogError(failedMessage);
         messageText.SetText(failedMessage);
         messageText.color = Color.red;

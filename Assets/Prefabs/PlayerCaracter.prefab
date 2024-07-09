@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 161280cd7c61a4395adbae120b300b66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlayFabId: 
   PlayerInfoParams:
     GetCharacterInventories: 0
     GetCharacterList: 1
@@ -285,7 +286,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
   m_sharedMaterial: {fileID: -6007946182581794327, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}

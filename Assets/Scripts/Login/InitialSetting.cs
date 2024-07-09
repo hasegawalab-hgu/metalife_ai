@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using PlayFab;
@@ -31,13 +30,13 @@ public class InitialSetting : PlayFabLoginAndSignup
                 LinkCustomId(SystemInfo.deviceUniqueIdentifier);
             }
 
-            SetPlayerData();
+            SetUserData();
             initialSettingUI.SetActive(false);
             fusion.SetActive(true);
         }
     }
 
-    private void SetPlayerData()
+    private void SetUserData()
     {
         PlayFabClientAPI.UpdateUserTitleDisplayName(new UpdateUserTitleDisplayNameRequest{DisplayName = displayNameInput.text}, result => Debug.Log("DisplayNameの変更成功"),error => Debug.Log("DisplayNameの変更失敗"));
 
