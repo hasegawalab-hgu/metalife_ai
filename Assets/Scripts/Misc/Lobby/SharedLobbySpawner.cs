@@ -1,5 +1,6 @@
 using UnityEngine;
 using Fusion;
+using PlayFab.ClientModels;
 
 public class SharedLobbySpawner : NetworkBehaviour {
     
@@ -7,6 +8,6 @@ public class SharedLobbySpawner : NetworkBehaviour {
 
     public override void Spawned()
     {
-        this.Runner.Spawn(_character, Vector3.zero, inputAuthority: this.Runner.LocalPlayer);
+        NetworkObject localPlayer = this.Runner.Spawn(_character, Vector3.zero, inputAuthority: this.Runner.LocalPlayer);
     }
 }

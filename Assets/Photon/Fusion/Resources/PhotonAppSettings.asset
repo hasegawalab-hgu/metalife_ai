@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AppSettings:
     AppIdFusion: b869acae-afde-47de-9b3e-d714e90d79f6
-    AppIdChat: 
+    AppIdChat: a5beccbf-8495-4eb9-9e29-a9104f0b5a01
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
@@ -26,6 +26,6 @@ MonoBehaviour:
     EnableProtocolFallback: 1
     AuthMode: 0
     EnableLobbyStatistics: 0
-    NetworkLogging: 1
+    NetworkLogging: 0
     encryptionMode: 0
     emptyRoomTtl: 0
