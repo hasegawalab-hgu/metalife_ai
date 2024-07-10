@@ -60,6 +60,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
         signUpUI.SetActive(false);
         initialSettingUI.SetActive(false);
         loginUI.SetActive(true);
+        messageText.text = "";
     }
 
     public void OnSwitchToSignUp()
@@ -67,6 +68,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
         loginUI.SetActive(false);
         initialSettingUI.SetActive(false);
         signUpUI.SetActive(true);
+        messageText.text = "";
     }
 
     public void OnSwitchToInitialSetting()
@@ -74,5 +76,6 @@ public class PlayFabLoginAndSignup : MonoBehaviour
         loginUI.SetActive(false);
         signUpUI.SetActive(false);
         initialSettingUI.SetActive(true);
+        messageText.text = "";
     }
 }

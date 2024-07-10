@@ -46,6 +46,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         {
             GetSharedGroupData(PlayFabData.AllYearLabSharedGroupId);
             GetSharedGroupData(PlayFabData.MyYearLabSharedGroupId);
+            messageText.text = PlayFabData.CurrentSharedGroupId + "に入室";
             loginUI.SetActive(false);
             fusion.SetActive(true);
             PlayFabSettings.staticPlayer.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
@@ -86,6 +87,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             {
                 LinkCustomId(SystemInfo.deviceUniqueIdentifier);
             }
+            messageText.text = PlayFabData.CurrentSharedGroupId + "に入室";
             loginUI.SetActive(false);
             fusion.SetActive(true);
         }
@@ -93,7 +95,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
 
     void OnLoginWithPlayFabFailure(PlayFabError error)
     {
-        string errorMessage = "ユーザー名とパスワードでのログイン失敗";
+        string errorMessage = "ユーザー名とパスワードでのログイン失敗\n" + error.Error;
         messageText.SetText(errorMessage);
         messageText.color = Color.red;
 

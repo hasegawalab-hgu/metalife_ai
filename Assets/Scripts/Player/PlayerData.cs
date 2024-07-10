@@ -5,7 +5,6 @@ using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
 using Newtonsoft.Json;
-using UnityEditor.PackageManager.Requests;
 using UnityEditor;
 
 public class PlayerData : NetworkBehaviour
@@ -29,17 +28,23 @@ public class PlayerData : NetworkBehaviour
     
 
 
-    void Start()
+    private void Start()
     {
         isOnline = true;
         SetUserData();
+        Debug.Log(this.PlayFabId);
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
         {
             GetPlayerCombinedInfo();
         }
-
+        Debug.Log("spawenedだよ！" + this.PlayFabId);
         // 他ユーザーのテキストUIを設定
-        TextDisplayName.SetText(DisplayName);
+        Invoke("SetTextDisplayName", 1f);
+    }
+
+    private void SetTextDisplayName()
+    {
+        TextDisplayName.text = DisplayName;
     }
 
     private void GetPlayerCombinedInfo()
