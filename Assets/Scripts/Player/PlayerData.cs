@@ -32,14 +32,15 @@ public class PlayerData : NetworkBehaviour
     {
         isOnline = true;
         SetUserData();
-        Debug.Log(this.PlayFabId);
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
         {
-            GetPlayerCombinedInfo();
+            Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
         }
-        Debug.Log("spawenedだよ！" + this.PlayFabId);
-        // 他ユーザーのテキストUIを設定
-        Invoke("SetTextDisplayName", 1f);
+        else
+        {
+            // 他ユーザーのテキストUIを設定
+            Invoke("SetTextDisplayName", 1f); // すぐに実行すると反映されていないため1秒後に実行
+        }
     }
 
     private void SetTextDisplayName()
@@ -47,9 +48,27 @@ public class PlayerData : NetworkBehaviour
         TextDisplayName.text = DisplayName;
     }
 
+    /*
+    private void GetUserData()
+    {
+        var request = new GetUserDataRequest{PlayFabId = PlayFabSettings.staticPlayer.PlayFabId, };
+
+        PlayFabClientAPI.GetUserData(request,
+            result => 
+            {
+                DisplayName = result.Data["DisplayName"].Value;
+                GraduationYear = result.Data["GraduationYear"].Value;
+                KeepLoginInfo = result.Data["KeepLoginInfo"].Value == "True" ? true : false;
+                // 自分のテキストUIを設定
+                TextDisplayName.SetText(DisplayName);
+            },
+            error => Debug.Log(error.GenerateErrorReport())
+        );
+    }
+    */
     private void GetPlayerCombinedInfo()
     {
-        var request = new GetPlayerCombinedInfoRequest{PlayFabId = this.PlayFabId, InfoRequestParameters = PlayerInfoParams};
+        var request = new GetPlayerCombinedInfoRequest{PlayFabId = PlayFabSettings.staticPlayer.PlayFabId, InfoRequestParameters = PlayerInfoParams};
         PlayFabClientAPI.GetPlayerCombinedInfo(request, OnGetPlayerCombinedInfoSuccess, error => {Debug.Log("PlayerCombinedInfoの取得に失敗");});
     }
     private void OnGetPlayerCombinedInfoSuccess(GetPlayerCombinedInfoResult result)

@@ -5,10 +5,10 @@ using UnityEngine;
 public class PlayFabData : MonoBehaviour
 {
     public static string SharedGroupAdminId = "B909DEE6B7D0C9E2"; // 共有グループの管理者（Lab_AdminのPlayFabId & CustomId）
-    public static Dictionary<string, string> MyYearLabAllPlayers; // key: playfabId, value: isOnline
-    public static Dictionary<string, string> AllYearLabAllPlayers; // key: playfabId, value: isOnline
-    public static List<ChannelData> MyYearLabChannels;
-    public static List<ChannelData> AllYearLabChannels;
+    public static Dictionary<string, string> MyYearLabAllPlayers = new Dictionary<string, string>(); // key: playfabId, value: isOnline
+    public static Dictionary<string, string> AllYearLabAllPlayers = new Dictionary<string, string>(); // key: playfabId, value: isOnline
+    public static List<ChannelData> MyYearLabChannels = new List<ChannelData>();
+    public static List<ChannelData> AllYearLabChannels = new List<ChannelData>();
     public static string CurrentChannelId;
     public static string CurrentMessageTarget; // CH: All, DM: id
     public static string AllYearLabSharedGroupId = "hasegawa_lab"; // 全年度

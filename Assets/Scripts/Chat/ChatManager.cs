@@ -33,7 +33,7 @@ public class ChannelData
     }
 }
 
-public class ChatManager : MonoBehaviour
+public class ChatManager : NetworkBehaviour
 {
     [SerializeField]
     private TMP_InputField inputField;
@@ -48,7 +48,7 @@ public class ChatManager : MonoBehaviour
     private void Start()
     {
         // CreatChannel("testChannel", "test", new string[] {"a"});
-        RPC_SendMessage(PlayFabSettings.staticPlayer.PlayFabId, PlayFabSettings.staticPlayer.PlayFabId, "general", "aaaa");
+        // RPC_SendMessage(PlayFabSettings.staticPlayer.PlayFabId, PlayFabSettings.staticPlayer.PlayFabId, "general", "aaaa");
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
