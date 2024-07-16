@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine.UI;
 using PlayFab.MultiplayerModels;
 
-public class InitialSetting : PlayFabLoginAndSignup
+public class InitialSetting : AbstractPlayFabLoginAndSignup
 {
     [SerializeField] public TMP_InputField displayNameInput;
     [SerializeField] private TMP_InputField graduationYearInput;
@@ -60,9 +60,6 @@ public class InitialSetting : PlayFabLoginAndSignup
         SetDisplayName();
         Debug.Log("プレイヤーデータの更新成功");
         PlayFabData.CurrentSharedGroupId = PlayFabData.AllYearLabSharedGroupId + graduationYearInput.text;
-
-        GetSharedGroupData(PlayFabData.AllYearLabSharedGroupId);
-        GetSharedGroupData(PlayFabData.CurrentSharedGroupId);
 
         initialSettingUI.SetActive(false);
         fusion.SetActive(true);

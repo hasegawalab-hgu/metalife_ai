@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System;
 using UnityEditor;
 
-public class PlayFabLogin : PlayFabLoginAndSignup
+public class PlayFabLogin : AbstractPlayFabLoginAndSignup
 {
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField passwordInput;
@@ -44,9 +44,6 @@ public class PlayFabLogin : PlayFabLoginAndSignup
 
         if(result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True")
         {
-            GetSharedGroupData(PlayFabData.AllYearLabSharedGroupId);
-            GetSharedGroupData(PlayFabData.MyYearLabSharedGroupId);
-            messageText.text = PlayFabData.CurrentSharedGroupId + "に入室";
             loginUI.SetActive(false);
             fusion.SetActive(true);
             PlayFabSettings.staticPlayer.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
@@ -84,14 +81,11 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         else
         {
             PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
-            GetSharedGroupData(PlayFabData.AllYearLabSharedGroupId);
-            GetSharedGroupData(PlayFabData.MyYearLabSharedGroupId);
 
             if(result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True") // キャメルケースで取得される
             {
                 LinkCustomId(SystemInfo.deviceUniqueIdentifier);
             }
-            messageText.text = PlayFabData.CurrentSharedGroupId + "に入室";
             loginUI.SetActive(false);
             fusion.SetActive(true);
         }

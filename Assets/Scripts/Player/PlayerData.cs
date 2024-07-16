@@ -48,24 +48,6 @@ public class PlayerData : NetworkBehaviour
         TextDisplayName.text = DisplayName;
     }
 
-    /*
-    private void GetUserData()
-    {
-        var request = new GetUserDataRequest{PlayFabId = PlayFabSettings.staticPlayer.PlayFabId, };
-
-        PlayFabClientAPI.GetUserData(request,
-            result => 
-            {
-                DisplayName = result.Data["DisplayName"].Value;
-                GraduationYear = result.Data["GraduationYear"].Value;
-                KeepLoginInfo = result.Data["KeepLoginInfo"].Value == "True" ? true : false;
-                // 自分のテキストUIを設定
-                TextDisplayName.SetText(DisplayName);
-            },
-            error => Debug.Log(error.GenerateErrorReport())
-        );
-    }
-    */
     private void GetPlayerCombinedInfo()
     {
         var request = new GetPlayerCombinedInfoRequest{PlayFabId = PlayFabSettings.staticPlayer.PlayFabId, InfoRequestParameters = PlayerInfoParams};

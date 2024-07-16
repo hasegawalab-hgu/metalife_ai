@@ -5,7 +5,7 @@ using TMPro;
 using PlayFab;
 using PlayFab.ClientModels;
 
-public class PlayFabSignUp : PlayFabLoginAndSignup
+public class PlayFabSignUp : AbstractPlayFabLoginAndSignup
 {
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField passwordInput;
