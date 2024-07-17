@@ -7,17 +7,27 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System;
 using UnityEditor;
+using UnityEngine.UI;
 
-public class PlayFabLogin : AbstractPlayFabLoginAndSignup
+public class PlayFabLogin : PlayFabLoginAndSignup
 {
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField passwordInput;
-    // private bool keepLoginInfo;
+    [SerializeField] private Toggle KeepLoginInfo;
 
     void Start()
     {
-        PlayFabSettings.TitleId = "35895";
-        OnLoginWithDevice();
+        usernameInput.text = "";
+        passwordInput.text = "";
+        KeepLoginInfo.isOn = false;
+        if (PlayFabData.Islogouted == false)
+        {
+            OnLoginWithDevice();
+        }
+        else
+        {
+            PlayFabData.Islogouted = false;
+        }
     }
 
     void OnLoginWithDevice()
@@ -39,23 +49,27 @@ public class PlayFabLogin : AbstractPlayFabLoginAndSignup
 
     void OnLoginWithCustomIDSuccess(LoginResult result)
     {
-        Debug.Log("カスタムIDでのログイン成功");
+        PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
+        PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
+
+        Debug.Log("カスタムIDでのログイン成功" + PlayFabData.MyName);
         PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
 
-        if(result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True")
+        if (result.InfoResultPayload.UserData["IsOnline"].Equals("True"))
+        {
+            messageText.text = "このアカウントは現在別の端末でログインされています。";
+            messageText.color = Color.red;
+        }
+        else
         {
             loginUI.SetActive(false);
             fusion.SetActive(true);
-            PlayFabSettings.staticPlayer.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
         }
     }
 
     // カスタムIDでのログインに失敗した場合は、ユーザー名とパスワードでログイン
     public void OnLoginWIthPlayFab()
     {
-        username = usernameInput.text;
-        password = passwordInput.text;
-
         var request = new LoginWithPlayFabRequest
         {
             Username = usernameInput.text,
@@ -71,7 +85,14 @@ public class PlayFabLogin : AbstractPlayFabLoginAndSignup
     {
         Debug.Log("ユーザー名とパスワードでのログイン成功");
 
-        PlayFabSettings.staticPlayer.PlayFabId = result.InfoResultPayload.AccountInfo.PlayFabId;
+        if(KeepLoginInfo.isOn == true)
+        {
+            LinkCustomId(SystemInfo.deviceUniqueIdentifier);
+        }
+        else
+        {
+            UnlinkCustomId(SystemInfo.deviceUniqueIdentifier);
+        }
 
         if(result.NewlyCreated == true || result.InfoResultPayload.UserData.Count == 0 || result.InfoResultPayload.UserData.ContainsKey("DisplayName") == false || result.InfoResultPayload.UserData.ContainsKey("GraduationYear") == false)
         {
@@ -81,13 +102,30 @@ public class PlayFabLogin : AbstractPlayFabLoginAndSignup
         else
         {
             PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
+            
+            PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
+            PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
 
-            if(result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True") // キャメルケースで取得される
+            Debug.Log("カスタムIDでのログイン成功 " + PlayFabData.MyName);
+            
+            if (result.InfoResultPayload.UserData.ContainsKey("IsOnline"))
             {
-                LinkCustomId(SystemInfo.deviceUniqueIdentifier);
+                if(result.InfoResultPayload.UserData["IsOnline"].Value == "True")
+                {
+                    messageText.text = "このアカウントは現在別の端末でログインされています。";
+                    messageText.color = Color.red;
+                }
+                else
+                {
+                    loginUI.SetActive(false);
+                    fusion.SetActive(true);
+                }
             }
-            loginUI.SetActive(false);
-            fusion.SetActive(true);
+            else
+            {
+                loginUI.SetActive(false);
+                fusion.SetActive(true);
+            }
         }
     }
 

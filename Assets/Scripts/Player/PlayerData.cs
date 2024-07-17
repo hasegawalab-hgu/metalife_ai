@@ -34,12 +34,18 @@ public class PlayerData : NetworkBehaviour
         SetUserData();
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
         {
-            Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            
+            DisplayName = PlayFabData.MyName;
+            GraduationYear = PlayFabData.MyGraduationYear;
+            // 自分のテキストUIを設定
+            TextDisplayName.SetText(DisplayName);
         }
         else
         {
+            Debug.Log("start" + DisplayName);
             // 他ユーザーのテキストUIを設定
-            Invoke("SetTextDisplayName", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
     }
 
@@ -57,7 +63,6 @@ public class PlayerData : NetworkBehaviour
     {
         DisplayName = result.InfoResultPayload.UserData["DisplayName"].Value;
         GraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
-        KeepLoginInfo = result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True" ? true : false;
         // 自分のテキストUIを設定
         TextDisplayName.SetText(DisplayName);
     }
@@ -65,6 +70,7 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        Debug.Log("despauwnd");
         base.Despawned(runner, true);
         isOnline = false;
         SetUserData();
@@ -74,9 +80,18 @@ public class PlayerData : NetworkBehaviour
     {
         var request = new UpdateUserDataRequest
         {
-            Data = new Dictionary<string, string>{{"IsOnline", isOnline.ToString()}},
+            Data = new Dictionary<string, string>{{"IsOnline", isOnline.ToString()}, },
             Permission = UserDataPermission.Public
         };
-        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("IsOnline変更成功"), _=> Debug.Log("IsOnline変更失敗"));
+        PlayFabClientAPI.UpdateUserData(request, 
+            _ => 
+            {
+                Debug.Log("IsOnline変更成功");
+                if (isOnline == false)
+                {
+                    PlayFabSettings.staticPlayer.ForgetAllCredentials();
+                }
+            }, 
+            _=> Debug.Log("IsOnline変更失敗"));
     }
 }

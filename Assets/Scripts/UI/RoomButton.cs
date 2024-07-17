@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class RoomButton : AbstractPlayFabLoginAndSignup
+public class RoomButton : PlayFabLoginAndSignup
 {
     TMP_Text text;
-    Launcher launcher;
     void Start()
     {
-        launcher = GameObject.Find("FusionLauncher").GetComponent<Launcher>();
         text = GetComponentInChildren<TMP_Text>();
+        messageText.text = "Hello, " + PlayFabData.MyName;
+        messageText.color = Color.white;
         ChangeText();
     }
 
@@ -30,13 +30,13 @@ public class RoomButton : AbstractPlayFabLoginAndSignup
     {
         PlayFabData.CurrentSharedGroupId = PlayFabData.AllYearLabSharedGroupId;
         GetSharedGroupData(PlayFabData.CurrentSharedGroupId);
-        launcher.Launch();
+        //launcher.Launch();
     }
 
     public void OnClickMyYearLab()
     {
         PlayFabData.CurrentSharedGroupId = PlayFabData.MyYearLabSharedGroupId;
         GetSharedGroupData(PlayFabData.CurrentSharedGroupId);
-        launcher.Launch();
+        //launcher.Launch();
     }
 }

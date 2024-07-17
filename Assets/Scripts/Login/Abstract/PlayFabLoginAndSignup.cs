@@ -5,12 +5,13 @@ using TMPro;
 using PlayFab;
 using PlayFab.ClientModels;
 using Newtonsoft.Json;
+using System.Linq;
 
 
 /// <summary>
 /// ログイン処理やサインアップ処理を行うクラスに継承するクラス
 /// </summary>
-public class AbstractPlayFabLoginAndSignup : MonoBehaviour
+public class PlayFabLoginAndSignup : MonoBehaviour
 {
     [SerializeField] protected GameObject loginUI;
     [SerializeField] protected GameObject signUpUI;
@@ -19,18 +20,33 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
     [SerializeField] protected GameObject fusion;
     public GetPlayerCombinedInfoRequestParams playerInfoParams;
 
-    protected string username;
-    protected string password;
+
+    protected Launcher launcher;
+
+    void Awake()
+    {
+        launcher = GameObject.Find("FusionLauncher").GetComponent<Launcher>();
+    }
 
     protected void LinkCustomId(string customId)
     {
         var request = new LinkCustomIDRequest
         {
             CustomId = customId,
-            ForceLink = true // 既存のIDにリンクする場合はtrue
+            ForceLink = true 
         };
 
         PlayFabClientAPI.LinkCustomID(request, _ => Debug.Log("カスタムIDの保存成功"), e => Debug.Log("カスタムIDの保存失敗" + e.GenerateErrorReport()));
+    }
+
+    protected void UnlinkCustomId(string customId)
+    {
+        var request = new UnlinkCustomIDRequest
+        {
+            CustomId = customId,
+        };
+
+        PlayFabClientAPI.UnlinkCustomID(request, _ => Debug.Log("カスタムIDの解除成功"), e => Debug.Log("カスタムIDの解除失敗" + e.GenerateErrorReport()));
     }
 
     protected void GetSharedGroupData(string groupId)
@@ -44,21 +60,32 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
                 if(result.Data.ContainsKey("Channels")) // あとで変更
                 {
                     string jsonData = result.Data["Channels"].Value;
-                    PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<List<ChannelData>>(jsonData);
+                    PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
                 }
 
                 if(result.Data.ContainsKey("Players"))
                 {
                     string jsonData = result.Data["Players"].Value;
-                    HashSet<string> datas = JsonConvert.DeserializeObject<HashSet<string>>(jsonData);
-                    if(!datas.Contains(PlayFabSettings.staticPlayer.PlayFabId))
+                    Dictionary<string, string> datas = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonData);
+                    if(!datas.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                     {
-                        SetSharedGroupData(groupId, datas, PlayFabSettings.staticPlayer.PlayFabId);
+                        SetSharedGroupData(groupId, datas, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                    }
+                    else
+                    {
+                        if(datas[PlayFabSettings.staticPlayer.PlayFabId] != PlayFabData.MyName)
+                        {
+                            SetSharedGroupData(groupId, new Dictionary<string, string>(), PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                        }
+                        else
+                        {
+                            launcher.Launch();
+                        }
                     }
                 }
                 else
                 {
-                    SetSharedGroupData(groupId, new HashSet<string>(), PlayFabSettings.staticPlayer.PlayFabId);
+                    SetSharedGroupData(groupId, new Dictionary<string, string>(), PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
                 }
             }
             , error => Debug.Log("get失敗: " + error.GenerateErrorReport()));
@@ -71,16 +98,16 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
     /// <param name="players"></param>
     /// <param name="addPlayer"></param>
     /// <param name="firstCall"></param>
-    private void SetSharedGroupData(string groupId, HashSet<string> players, string addData)
+    private void SetSharedGroupData(string groupId, Dictionary<string, string> players, string id, string playerName)
     {
-        players.Add(addData);
+        players.Add(id, playerName);
         string jsonDataPlayers = JsonConvert.SerializeObject(players);
 
         // playerが1人（自分のみ）の場合はgeneralを作る
         if(players.Count == 1 && PlayFabData.CurrentRoomChannels.Count == 0)
         {
-            ChannelData channelData = new ChannelData("general", "general", new List<string>(){addData});
-            PlayFabData.CurrentRoomChannels.Add(channelData);
+            ChannelData channelData = new ChannelData("general", "general", new List<string>(){ id });
+            PlayFabData.CurrentRoomChannels.Add(channelData.ChannelId, channelData);
             List<ChannelData> list = new List<ChannelData>() {channelData};
             string jsonData = JsonConvert.SerializeObject(list);
 
@@ -94,11 +121,11 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
 
         // generalのメンバーに追加
         string jsonDataChannels = JsonConvert.SerializeObject(PlayFabData.CurrentRoomChannels);
-        if(PlayFabData.CurrentRoomChannels.Count != 0 && PlayFabData.CurrentRoomChannels != new List<ChannelData>())
+        if(PlayFabData.CurrentRoomChannels.Count != 0 && PlayFabData.CurrentRoomChannels != new Dictionary<string, ChannelData>())
         {
-            if(!PlayFabData.CurrentRoomChannels[0].MemberIds.Contains(addData))
+            if(!PlayFabData.CurrentRoomChannels["general"].MemberIds.Contains(id))
             {
-                PlayFabData.CurrentRoomChannels[0].MemberIds.Add(addData);
+                PlayFabData.CurrentRoomChannels["general"].MemberIds.Add(id);
             }
             jsonDataChannels = JsonConvert.SerializeObject(PlayFabData.CurrentRoomChannels);
         }
@@ -113,6 +140,7 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
             result => 
             {
                 Debug.Log("Players更新成功");
+                launcher.Launch();
             },
             e => 
             {
@@ -131,7 +159,7 @@ public class AbstractPlayFabLoginAndSignup : MonoBehaviour
                             var request = new AddSharedGroupMembersRequest
                             {
                                 SharedGroupId = groupId,
-                                PlayFabIds = new List<string>(){ addData },
+                                PlayFabIds = new List<string>(){ id },
                             };
                             // 追加に成功したらもう一度データの保存を行う
                             PlayFabClientAPI.AddSharedGroupMembers(request, 
