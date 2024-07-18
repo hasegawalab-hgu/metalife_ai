@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using PlayFab.MultiplayerModels;
+using PlayFab;
 
 public class ChatUIManager : MonoBehaviour
 {
-    [SerializeField]
-    private Toggle toggle_CHDM; // isOn == true: , isOn == false: DM
-    [SerializeField]
-    private GameObject obj_CH;
-    [SerializeField]
-    private GameObject obj_DM;
+    private ChatManager chatManager;
 
-
+    // chat画面のUI
     [SerializeField]
     private GameObject spawner_channel;
     [SerializeField]
@@ -30,34 +27,93 @@ public class ChatUIManager : MonoBehaviour
     private GameObject spawner_message;
     [SerializeField]
     private TMP_Text text_messagePref; // prefab
+    [SerializeField]
+    public TMP_Text text_channelName;
 
-    public void OnCalueChangedCHDM()
+    // channel作成時に使用
+    [SerializeField]
+    private Button button_moveCreateChannel;
+    [SerializeField]
+    private TMP_InputField channelName;
+    [SerializeField]
+    private List<Toggle> addMemberToggles;
+    [SerializeField]
+    private Button button_return;
+    [SerializeField]
+    private Button button_create;
+    [SerializeField]
+    private GameObject panel_CHDM;
+    [SerializeField]
+    private GameObject panel_createChannel;
+    [SerializeField]
+    private GameObject spawner_members;
+    [SerializeField]
+    private Toggle toggle_member; // prefab
+    [SerializeField]
+    private Button button_addAllmembers;
+    [SerializeField]
+    private GameObject panel_Members;
+    [SerializeField]
+    private TMP_Dropdown dd_channelType;
+
+    void Start()
     {
-        if(toggle_CHDM.isOn) // 
+        chatManager = GetComponent<ChatManager>();
+        text_channelName.text = "# " + PlayFabData.CurrentRoomChannels[PlayFabData.CurrentChannelId].ChannelName; // generalなので#をつける
+        DisplayChannelTargets();
+        DisplayDMTargets();
+    }
+    
+    void DestroyChildren(Transform root)
+    {
+        foreach(Transform child in root.transform)
         {
-            obj_CH.GetComponent<Image>().color += new Color(0f, 0f, 0f, 200);
-            obj_DM.GetComponent<Image>().color += new Color(0f, 0f, 0f, -200);
-        }
-        else // DM
+            Destroy(child.gameObject);
+        }   
+    }
+
+    public void DisplayChannelTargets()
+    {
+        DestroyChildren(spawner_channel.transform);
+
+        foreach(ChannelData value in PlayFabData.CurrentRoomChannels.Values)
         {
-            obj_DM.GetComponent<Image>().color += new Color(0f, 0f, 0f, 200);
-            obj_CH.GetComponent<Image>().color += new Color(0f, 0f, 0f, -200);
+            // 自分がメンバーに含まれているチャンネルだけ表示
+            if(value.MemberIds.Contains(PlayFabSettings.staticPlayer.PlayFabId))
+            {
+                var obj = Instantiate(button_channelTarget, new Vector3(0f, 0f, 0f), Quaternion.identity);
+                obj.name = value.ChannelName;
+                obj.transform.SetParent(spawner_channel.transform);
+                TMP_Text tx = obj.GetComponentInChildren<TMP_Text>();
+                if (value.ChannelType == "Public")
+                {
+                    tx.text = "# " + value.ChannelName;
+                }
+                else
+                {
+                    tx.text = value.ChannelName;
+                }
+                obj.gameObject.AddComponent<ChannelButton>().channelData = value;
+            }
         }
     }
 
-    private void DisplayChannelTargets()
+    public void DisplayDMTargets()
     {
+        DestroyChildren(spawner_DM.transform);
 
-        // var obj = Instantiate(button_channelTarget).GetComponentInChildren<TextMeshProUGUI>().text = ; // あとで変更
-        // 親
-        // スクリプト付与
-        // スクリプトの変数初期化
-        // onclick()設定
-    }
+        foreach(var player in PlayFabData.CurrentRoomPlayers)
+        {
+            var obj = Instantiate(button_channelTarget, new Vector3(0f, 0f, 0f), Quaternion.identity);
+            obj.name = player.Value;
+            obj.transform.SetParent(spawner_DM.transform);
+            obj.GetComponentInChildren<TMP_Text>().text = player.Value;
+            DMButton script = obj.gameObject.AddComponent<DMButton>();
+            script.myId = player.Key;
+            script.myName = player.Value;
 
-    private void DisplayDMTargets()
-    {
-
+            PlayFabData.DictDMScripts.Add(player.Key, script);
+        }
     }
 
     public void OnClickSubmit()
@@ -65,23 +121,83 @@ public class ChatUIManager : MonoBehaviour
 
     }
 
-    public void OnClickCH()
+    public void OnClickReturn()
     {
+        panel_createChannel.SetActive(false);
+        panel_CHDM.SetActive(true);
 
+        channelName.text = "";
+        DestroyChildren(spawner_members.transform);
     }
 
-    public void OnClickDM()
+    // Createボタン
+    public void OnClickCreate()
     {
+        if(string.IsNullOrEmpty(channelName.text))
+        {
+            Debug.Log("チャンネル名を入力してください");
+            //channelName.color = Color.red;
+        }
+        else
+        {
+            List<string> ids = new List<string>(){PlayFabSettings.staticPlayer.PlayFabId}; // 自分のidは先にリストに入れる
+            foreach(var toggle in addMemberToggles)
+            {
+                if(toggle.isOn)
+                {
+                    ids.Add(toggle.GetComponent<MemberToggle>().myId);
+                }
+            }
 
+            int rand = Random.Range(0, 10000);
+                chatManager.CreatChannel(channelName.text + rand.ToString(), channelName.text, ids, dd_channelType.captionText.text);
+        }
     }
 
-    public void OnClickChannelTarget()
+    // +ボタン
+    public void OnClickCreateChannel()
     {
+        panel_CHDM.SetActive(false);
+        panel_createChannel.SetActive(true);
 
+        foreach(var member in PlayFabData.CurrentRoomPlayers)
+        {
+            // 自分以外表示
+            if(member.Key != PlayFabSettings.staticPlayer.PlayFabId)
+            {
+                var obj = Instantiate(toggle_member, new Vector3(0f, 0f, 0f), Quaternion.identity);
+                obj.name = member.Value;
+                obj.transform.SetParent(spawner_members.transform);
+                MemberToggle script = obj.gameObject.AddComponent<MemberToggle>();
+                script.myName = member.Value;
+                script.myId = member.Key;
+                obj.GetComponentInChildren<Text>().text = member.Value;
+
+                addMemberToggles.Add(obj);
+            }
+        }
     }
 
-    public void OnClickDMTarget()
+    // 全員をonにする
+    public void OnClickAddAllMembers()
     {
+        foreach(var toggle in addMemberToggles)
+        {
+            toggle.isOn = true;
+        }
+    }
 
+    public void OnValueChangedChannelType(TMP_Dropdown dd)
+    {
+        Debug.Log("valueChanged: " + dd.value);
+        if(dd.value == 0) // Private
+        {
+            panel_Members.SetActive(true);
+        }
+        else if(dd.value == 1) // Public
+        {
+            OnClickAddAllMembers();
+            panel_Members.SetActive(false);
+        }
     }
 }

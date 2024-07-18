@@ -66,16 +66,17 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                 if(result.Data.ContainsKey("Players"))
                 {
                     string jsonData = result.Data["Players"].Value;
-                    Dictionary<string, string> datas = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonData);
-                    if(!datas.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
+                    PlayFabData.CurrentRoomPlayers = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonData);
+
+                    if(!PlayFabData.CurrentRoomPlayers.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                     {
-                        SetSharedGroupData(groupId, datas, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                        SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
                     }
                     else
                     {
-                        if(datas[PlayFabSettings.staticPlayer.PlayFabId] != PlayFabData.MyName)
+                        if(PlayFabData.CurrentRoomPlayers[PlayFabSettings.staticPlayer.PlayFabId] != PlayFabData.MyName)
                         {
-                            SetSharedGroupData(groupId, new Dictionary<string, string>(), PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                            SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
                         }
                         else
                         {
@@ -85,7 +86,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                 }
                 else
                 {
-                    SetSharedGroupData(groupId, new Dictionary<string, string>(), PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                    SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
                 }
             }
             , error => Debug.Log("get失敗: " + error.GenerateErrorReport()));
@@ -98,15 +99,15 @@ public class PlayFabLoginAndSignup : MonoBehaviour
     /// <param name="players"></param>
     /// <param name="addPlayer"></param>
     /// <param name="firstCall"></param>
-    private void SetSharedGroupData(string groupId, Dictionary<string, string> players, string id, string playerName)
+    private void SetSharedGroupData(string groupId, string id, string playerName)
     {
-        players.Add(id, playerName);
-        string jsonDataPlayers = JsonConvert.SerializeObject(players);
+        PlayFabData.CurrentRoomPlayers.Add(id, playerName);
+        string jsonDataPlayers = JsonConvert.SerializeObject(PlayFabData.CurrentRoomPlayers);
 
         // playerが1人（自分のみ）の場合はgeneralを作る
-        if(players.Count == 1 && PlayFabData.CurrentRoomChannels.Count == 0)
+        if(PlayFabData.CurrentRoomPlayers.Count == 1 && PlayFabData.CurrentRoomChannels.Count == 0)
         {
-            ChannelData channelData = new ChannelData("general", "general", new List<string>(){ id });
+            ChannelData channelData = new ChannelData("general", "general", new List<string>(){ id }, "Public");
             PlayFabData.CurrentRoomChannels.Add(channelData.ChannelId, channelData);
             List<ChannelData> list = new List<ChannelData>() {channelData};
             string jsonData = JsonConvert.SerializeObject(list);
@@ -123,10 +124,16 @@ public class PlayFabLoginAndSignup : MonoBehaviour
         string jsonDataChannels = JsonConvert.SerializeObject(PlayFabData.CurrentRoomChannels);
         if(PlayFabData.CurrentRoomChannels.Count != 0 && PlayFabData.CurrentRoomChannels != new Dictionary<string, ChannelData>())
         {
-            if(!PlayFabData.CurrentRoomChannels["general"].MemberIds.Contains(id))
+            Dictionary<string, ChannelData> list = new Dictionary<string , ChannelData>();
+            foreach(var tmp in PlayFabData.CurrentRoomChannels)
             {
-                PlayFabData.CurrentRoomChannels["general"].MemberIds.Add(id);
+                if(tmp.Value.ChannelType == "Public" && tmp.Value.MemberIds.Contains(id) == false)
+                {
+                    tmp.Value.MemberIds.Add(id);
+                }
+                list.Add(tmp.Key, tmp.Value);
             }
+            PlayFabData.CurrentRoomChannels = list;
             jsonDataChannels = JsonConvert.SerializeObject(PlayFabData.CurrentRoomChannels);
         }
 

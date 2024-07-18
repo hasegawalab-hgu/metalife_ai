@@ -26,10 +26,11 @@ public class PlayerData : NetworkBehaviour
 
     private bool isOnline;
     
-
+    private ChatManager chatManager;
 
     private void Start()
     {
+        chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         isOnline = true;
         SetUserData();
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
@@ -47,6 +48,8 @@ public class PlayerData : NetworkBehaviour
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
+
+        PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
     }
 
     private void SetTextDisplayName()
@@ -74,6 +77,8 @@ public class PlayerData : NetworkBehaviour
         base.Despawned(runner, true);
         isOnline = false;
         SetUserData();
+
+        PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
     }
 
     private void SetUserData()

@@ -24,12 +24,14 @@ public class ChannelData
     public string ChannelId;
     public string ChannelName;
     public List<string> MemberIds;
+    public string ChannelType;
 
-    public ChannelData(string chId, string chName, List<string> menberIds)
+    public ChannelData(string chId, string chName, List<string> menberIds, string chType)
     {
         ChannelId = chId;
         ChannelName = chName;
         MemberIds = menberIds;
+        ChannelType = chType;
     }
 }
 
@@ -37,18 +39,19 @@ public class ChatManager : NetworkBehaviour
 {
     [SerializeField]
     private TMP_InputField inputField;
+
+    private ChatUIManager chatUIManager;
     [SerializeField]
     private TMP_Text outputField;
 
-    private ChannelData channelData; // 追加するチャンネルデータ
+    private ChannelData addChannelData; // 追加するチャンネルデータ
 
     private MessageData receivedMessageData;
 
 
     private void Start()
     {
-        // CreatChannel("testChannel", "test", new string[] {"a"});
-        // RPC_SendMessage(PlayFabSettings.staticPlayer.PlayFabId, PlayFabSettings.staticPlayer.PlayFabId, "general", "aaaa");
+        chatUIManager = GetComponent<ChatUIManager>();
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
@@ -70,35 +73,38 @@ public class ChatManager : NetworkBehaviour
         // メッセージ表示の処理など
     }
 
-    public void CreatChannel(string channelId, string channelName, List<string> menberIds)
+    public void CreatChannel(string channelId, string channelName, List<string> menberIds, string channelType)
     {
-        channelData = new ChannelData(channelId, channelName, menberIds);
-        
+        addChannelData = new ChannelData(channelId, channelName, menberIds, channelType);
+        AddChannel(addChannelData);
+        /*
         var request = new GetSharedGroupDataRequest
         {
             SharedGroupId = PlayFabData.CurrentSharedGroupId
         };
         PlayFabClientAPI.GetSharedGroupData(request, OnGetChannelDatasSuccess, error => Debug.Log(error.GenerateErrorReport()));
+        */
     }
 
+    /*
     public void OnGetChannelDatasSuccess(GetSharedGroupDataResult result)
     {
         if (result.Data.ContainsKey("Channels") == false)
         {
-            AddChannel(new List<ChannelData>{}, channelData);
+            AddChannel(channelData);
         }
         else
         {
             string jsonData = result.Data["Channels"].Value;
-            List<ChannelData> channels = JsonConvert.DeserializeObject<List<ChannelData>>(jsonData);
-            AddChannel(channels, channelData);
+            PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
+            AddChannel(channelData);
         }
     }
-
-    public void AddChannel(List<ChannelData> channelDatas, ChannelData data)
+    */
+    private void AddChannel(ChannelData data)
     {
-        channelDatas.Add(data);
-        string jsonData = JsonConvert.SerializeObject(channelDatas);
+        PlayFabData.CurrentRoomChannels.Add(data.ChannelId, data);
+        string jsonData = JsonConvert.SerializeObject(PlayFabData.CurrentRoomChannels);
 
         var request = new UpdateSharedGroupDataRequest
         {
@@ -107,6 +113,14 @@ public class ChatManager : NetworkBehaviour
             Permission = UserDataPermission.Public
         };
 
-        PlayFabClientAPI.UpdateSharedGroupData(request, _ => Debug.Log("channelData保存成功" + channelData.ChannelId), error => Debug.Log(error.GenerateErrorReport()));
+        PlayFabClientAPI.UpdateSharedGroupData(
+            request, 
+            _ => 
+                {
+                    Debug.Log("channelData保存成功" + addChannelData.ChannelId);
+                    chatUIManager.OnClickReturn();
+                    chatUIManager.DisplayChannelTargets();
+                },
+            error => Debug.Log(error.GenerateErrorReport()));
     }
 }

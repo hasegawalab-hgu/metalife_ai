@@ -30,13 +30,13 @@ public class RoomButton : PlayFabLoginAndSignup
     {
         PlayFabData.CurrentSharedGroupId = PlayFabData.AllYearLabSharedGroupId;
         GetSharedGroupData(PlayFabData.CurrentSharedGroupId);
-        //launcher.Launch();
+        fusion.gameObject.SetActive(false);
     }
 
     public void OnClickMyYearLab()
     {
         PlayFabData.CurrentSharedGroupId = PlayFabData.MyYearLabSharedGroupId;
         GetSharedGroupData(PlayFabData.CurrentSharedGroupId);
-        //launcher.Launch();
+        fusion.SetActive(false);
     }
 }
