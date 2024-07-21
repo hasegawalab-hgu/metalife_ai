@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,8 +7,8 @@ public class ChannelButton : MonoBehaviour
 {
     public ChannelData channelData; // 生成される時に割り当てられる
     private ChatUIManager chatUIManager;
-
-    private List<MessageData> masageDatas = new List<MessageData>();
+    public string beforeSendText;
+    public List<MessageData> messageDatas = new List<MessageData>();
 
 
     void Start()
@@ -20,15 +19,37 @@ public class ChannelButton : MonoBehaviour
 
     public void OnClickButton()
     {
-        PlayFabData.CurrentChannelId = channelData.ChannelId;
+        if(PlayFabData.CurrentChannelId == "DM")
+        {
+            PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
+            chatUIManager.inputField.text = "";
+        }
+        else if(PlayFabData.CurrentMessageTarget == "All")
+        {
+            PlayFabData.DictChannelScripts[PlayFabData.CurrentChannelId].beforeSendText = chatUIManager.inputField.text;
+            chatUIManager.inputField.text = "";
+        }
+        
+        if(!string.IsNullOrEmpty(beforeSendText))
+        {
+            chatUIManager.inputField.text = beforeSendText;
+        }
 
-        if (PlayFabData.CurrentRoomChannels[PlayFabData.CurrentChannelId].ChannelType == "Public")
+        if (PlayFabData.CurrentRoomChannels[channelData.ChannelId].ChannelType == "Public")
         {
             chatUIManager.text_channelName.text = "# " + channelData.ChannelName;
         }
         else
         {
             chatUIManager.text_channelName.text = channelData.ChannelName;
+        }
+        PlayFabData.CurrentChannelId = channelData.ChannelId;
+        PlayFabData.CurrentMessageTarget = "All";
+
+        chatUIManager.DestroyChildren(chatUIManager.spawner_message.transform);
+        foreach(MessageData messagedata in messageDatas)
+        {
+            chatUIManager.DisplayMessage(messagedata);
         }
     }
 }

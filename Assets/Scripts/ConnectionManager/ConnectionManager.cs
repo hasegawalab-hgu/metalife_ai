@@ -61,7 +61,7 @@ namespace CustomConnectionHandler {
             connection.ActiveConnection = connectionData;
 
             // var gameMode = connectionData.Target == Lobby ? GameMode.Shared : GameMode.AutoHostOrClient;
-            var gameMode = GameMode.Shared;
+            var gameMode = GameMode.Shared; // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             var sceneInfo = new NetworkSceneInfo();
             if (connectionData.Target == Lobby)
             {

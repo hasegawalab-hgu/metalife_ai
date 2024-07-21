@@ -11,8 +11,9 @@ public class DMButton : MonoBehaviour
     public GameObject playerInstance;
 
     private ChatUIManager chatUIManager;
+    public string beforeSendText;
 
-    private List<MessageData> masageDatas = new List<MessageData>();
+    public List<MessageData> messageDatas = new List<MessageData>();
 
     void Start()
     {
@@ -22,8 +23,30 @@ public class DMButton : MonoBehaviour
 
     public void OnClickButton()
     {
-        Debug.Log("onclick");
-        PlayFabData.CurrentChannelId = null;
+        if(PlayFabData.CurrentChannelId == "DM")
+        {
+            PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
+            chatUIManager.inputField.text = "";
+        }
+        else if(PlayFabData.CurrentMessageTarget == "All")
+        {
+            PlayFabData.DictChannelScripts[PlayFabData.CurrentChannelId].beforeSendText = chatUIManager.inputField.text;
+            chatUIManager.inputField.text = "";
+        }
+        
+        if(!string.IsNullOrEmpty(beforeSendText))
+        {
+            chatUIManager.inputField.text = beforeSendText;
+        }
+        
+        PlayFabData.CurrentChannelId = "DM";
+        PlayFabData.CurrentMessageTarget = myId;
         chatUIManager.text_channelName.text = "DM : " + myName;
+
+        chatUIManager.DestroyChildren(chatUIManager.spawner_message.transform);
+        foreach (var messageData in messageDatas)
+        {
+            chatUIManager.DisplayMessage(messageData);
+        }
     }
 }

@@ -52,10 +52,11 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
         PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
 
-        Debug.Log("カスタムIDでのログイン成功" + PlayFabData.MyName);
+        Debug.Log("カスタムIDでのログイン成功" + PlayFabData.MyName + result.InfoResultPayload.UserData["IsOnline"]);
         PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
 
-        if (result.InfoResultPayload.UserData["IsOnline"].Equals("True"))
+        /*
+        if (result.InfoResultPayload.UserData["IsOnline"].Value == "True")
         {
             messageText.text = "このアカウントは現在別の端末でログインされています。";
             messageText.color = Color.red;
@@ -65,6 +66,10 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             loginUI.SetActive(false);
             fusion.SetActive(true);
         }
+        */
+
+        loginUI.SetActive(false);
+        fusion.SetActive(true);
     }
 
     // カスタムIDでのログインに失敗した場合は、ユーザー名とパスワードでログイン
@@ -110,6 +115,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             
             if (result.InfoResultPayload.UserData.ContainsKey("IsOnline"))
             {
+                /*
                 if(result.InfoResultPayload.UserData["IsOnline"].Value == "True")
                 {
                     messageText.text = "このアカウントは現在別の端末でログインされています。";
@@ -120,6 +126,9 @@ public class PlayFabLogin : PlayFabLoginAndSignup
                     loginUI.SetActive(false);
                     fusion.SetActive(true);
                 }
+                */
+                loginUI.SetActive(false);
+                fusion.SetActive(true);
             }
             else
             {

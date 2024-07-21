@@ -35,7 +35,7 @@ public class ChannelData
     }
 }
 
-public class ChatManager : NetworkBehaviour
+public class ChatManager : MonoBehaviour
 {
     [SerializeField]
     private TMP_InputField inputField;
@@ -48,59 +48,20 @@ public class ChatManager : NetworkBehaviour
 
     private MessageData receivedMessageData;
 
+    public ChatSender chatSender;
+
 
     private void Start()
     {
         chatUIManager = GetComponent<ChatUIManager>();
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
-    public void RPC_SendMessage(string senderId, string receiverId, string channelId, string content)
-    {
-        var timestamp = DateTime.UtcNow.ToString("o");
-        var messageData = new MessageData
-        {
-            SenderId = senderId,
-            ReceiverId = receiverId,
-            ChannelId = channelId,
-            Content = content,
-            Timestamp = timestamp
-        };
-
-        // ローカルデータベースに保存する
-        receivedMessageData = messageData;
-        Debug.Log(receivedMessageData.Content);
-        // メッセージ表示の処理など
-    }
-
     public void CreatChannel(string channelId, string channelName, List<string> menberIds, string channelType)
     {
         addChannelData = new ChannelData(channelId, channelName, menberIds, channelType);
         AddChannel(addChannelData);
-        /*
-        var request = new GetSharedGroupDataRequest
-        {
-            SharedGroupId = PlayFabData.CurrentSharedGroupId
-        };
-        PlayFabClientAPI.GetSharedGroupData(request, OnGetChannelDatasSuccess, error => Debug.Log(error.GenerateErrorReport()));
-        */
     }
 
-    /*
-    public void OnGetChannelDatasSuccess(GetSharedGroupDataResult result)
-    {
-        if (result.Data.ContainsKey("Channels") == false)
-        {
-            AddChannel(channelData);
-        }
-        else
-        {
-            string jsonData = result.Data["Channels"].Value;
-            PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
-            AddChannel(channelData);
-        }
-    }
-    */
     private void AddChannel(ChannelData data)
     {
         PlayFabData.CurrentRoomChannels.Add(data.ChannelId, data);

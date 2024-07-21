@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
@@ -6,6 +7,7 @@ using PlayFab.ClientModels;
 using TMPro;
 using Newtonsoft.Json;
 using UnityEditor;
+
 
 public class PlayerData : NetworkBehaviour
 {
@@ -28,19 +30,22 @@ public class PlayerData : NetworkBehaviour
     
     private ChatManager chatManager;
 
+
     private void Start()
     {
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
-        isOnline = true;
-        SetUserData();
+        
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
         {
             // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            isOnline = true;
             
             DisplayName = PlayFabData.MyName;
             GraduationYear = PlayFabData.MyGraduationYear;
             // 自分のテキストUIを設定
             TextDisplayName.SetText(DisplayName);
+            SetUserData();
+            chatManager.chatSender = GetComponent<ChatSender>();
         }
         else
         {
@@ -48,7 +53,11 @@ public class PlayerData : NetworkBehaviour
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
+        Invoke("AddDictDMScripts", 1f);
+    }
 
+    private void AddDictDMScripts()
+    {
         PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
     }
 
@@ -75,10 +84,32 @@ public class PlayerData : NetworkBehaviour
     {
         Debug.Log("despauwnd");
         base.Despawned(runner, true);
+        if (this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        {
+            isOnline = false;
+            PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
+            PlayFabData.DictChannelScripts = new Dictionary<string, ChannelButton>();
+            PlayFabData.CurrentChannelId = "general";
+        }
+    }
+
+    private void OnDestroy()
+    {
         isOnline = false;
         SetUserData();
+    }
 
-        PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
+    void OnExitButtonClicked()
+    {
+
+    }
+
+    void OnApplicationQuit()
+    {
+        isOnline = false;
+        // StartCoroutine(SetUserData());
+        // SetUserData();
+
     }
 
     private void SetUserData()
@@ -97,6 +128,10 @@ public class PlayerData : NetworkBehaviour
                     PlayFabSettings.staticPlayer.ForgetAllCredentials();
                 }
             }, 
-            _=> Debug.Log("IsOnline変更失敗"));
+            _=> 
+            {
+                Debug.Log("IsOnline変更失敗");
+            }
+        );
     }
 }

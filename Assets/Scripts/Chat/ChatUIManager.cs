@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using PlayFab.MultiplayerModels;
+using PlayFab.ClientModels;
 using PlayFab;
+using ExitGames.Client.Photon.StructWrapping;
 
 public class ChatUIManager : MonoBehaviour
 {
@@ -20,11 +21,11 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     private Button button_DMTarget; // prefab
     [SerializeField]
-    private TMP_InputField inputField;
+    public TMP_InputField inputField;
     [SerializeField]
     private Button button_submit;
     [SerializeField]
-    private GameObject spawner_message;
+    public GameObject spawner_message;
     [SerializeField]
     private TMP_Text text_messagePref; // prefab
     [SerializeField]
@@ -64,7 +65,7 @@ public class ChatUIManager : MonoBehaviour
         DisplayDMTargets();
     }
     
-    void DestroyChildren(Transform root)
+    public void DestroyChildren(Transform root)
     {
         foreach(Transform child in root.transform)
         {
@@ -94,6 +95,7 @@ public class ChatUIManager : MonoBehaviour
                     tx.text = value.ChannelName;
                 }
                 obj.gameObject.AddComponent<ChannelButton>().channelData = value;
+                PlayFabData.DictChannelScripts.Add(value.ChannelId, obj.GetComponent<ChannelButton>());
             }
         }
     }
@@ -199,5 +201,29 @@ public class ChatUIManager : MonoBehaviour
             OnClickAddAllMembers();
             panel_Members.SetActive(false);
         }
+    }
+
+    public void OnClickSubmitButton()
+    {
+        if(!string.IsNullOrEmpty(inputField.text))
+        {
+            string receiverId = PlayFabData.CurrentMessageTarget;
+
+            PlayFabClientAPI.GetTime(new GetTimeRequest(), 
+                result =>
+                {
+                    chatManager.chatSender.RPC_SendMessageRequest(PlayFabSettings.staticPlayer.PlayFabId, receiverId, PlayFabData.CurrentChannelId, inputField.text, result.Time.AddHours(9d).ToString());
+                    inputField.text = "";
+                },
+                _ => Debug.Log("時間取得失敗")
+            );
+        }
+    }
+
+    public void DisplayMessage(MessageData messageData)
+    {
+        var obj = Instantiate(text_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+        obj.transform.SetParent(spawner_message.transform);
+        obj.GetComponent<TMP_Text>().text = messageData.Content;
     }
 }
