@@ -61,6 +61,7 @@ public class ChatSender : NetworkBehaviour
             else if(receiverId == "All")
             {
                 PlayFabData.DictChannelScripts[channelId].messageDatas.Add(messageData);
+                chatUIManager.UpdateChannelMessageData(messageData);
                 if(PlayFabData.CurrentChannelId == channelId)
                 {
                     chatUIManager.DisplayMessage(messageData);

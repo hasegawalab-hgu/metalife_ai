@@ -6,6 +6,9 @@ using UnityEngine.UI;
 using PlayFab.ClientModels;
 using PlayFab;
 using ExitGames.Client.Photon.StructWrapping;
+using UnityEngine.Networking.PlayerConnection;
+using Newtonsoft.Json;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 public class ChatUIManager : MonoBehaviour
 {
@@ -201,6 +204,39 @@ public class ChatUIManager : MonoBehaviour
             OnClickAddAllMembers();
             panel_Members.SetActive(false);
         }
+    }
+
+    /*
+    public List<ChannelData> GetChannelMessageData(string channelId)
+    {
+        var request = new GetSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+            Keys = new List<string>(){channelId}
+        };
+        PlayFabClientAPI.GetSharedGroupData(request, 
+            result => 
+            {
+                return JsonConvert.DeserializeObject<List<ChannelData>>(result.Data[channelId].Value);
+            },
+            e => 
+        );
+        return new List<ChannelData>();
+    }
+    */
+    
+    public void UpdateChannelMessageData(MessageData messageData)
+    {
+        List<MessageData> Datas = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas;
+        Datas.Add(messageData);
+        string jsonData = JsonConvert.SerializeObject(Datas);
+        var request = new UpdateSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+            Data = new Dictionary<string, string> { { messageData.ChannelId,  jsonData} },
+            Permission = UserDataPermission.Public
+        };
+        PlayFabClientAPI.UpdateSharedGroupData(request, _ => Debug.Log("共有グループデータの変更成功"), _ => Debug.Log("共有グループデータの変更失敗"));
     }
 
     public void OnClickSubmitButton()

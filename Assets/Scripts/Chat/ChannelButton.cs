@@ -15,6 +15,7 @@ public class ChannelButton : MonoBehaviour
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         GetComponent<Button>().onClick.AddListener(OnClickButton);
+        
     }
 
     public void OnClickButton()
