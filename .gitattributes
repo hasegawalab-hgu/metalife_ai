@@ -134,7 +134,7 @@ Assets/Plugins/**       linguist-vendored
 *.zip                   lfs
 
 # Compiled Dynamic Library
-*.dll                   lfs
+*.dll                   lfs binary
 *.pdb                   lfs
 *.so                    lfs
 
