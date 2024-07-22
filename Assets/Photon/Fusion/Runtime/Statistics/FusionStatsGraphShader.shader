@@ -1,4 +1,4 @@
-Shader "Fusion/Fusion Stats Graph"
+﻿Shader "Fusion/Fusion Stats Graph"
 {
 	Properties
 	{

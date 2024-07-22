@@ -1,4 +1,4 @@
-namespace Fusion.Statistics {
+﻿namespace Fusion.Statistics {
 using System;
 using UnityEngine;
 using UnityEngine.UI;
