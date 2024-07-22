@@ -6,11 +6,11 @@ using TMPro;
 using UnityEngine.UI;
 using PlayFab.MultiplayerModels;
 
-public class InitialSetting : AbstractPlayFabLoginAndSignup
+public class InitialSetting : PlayFabLoginAndSignup
 {
     [SerializeField] public TMP_InputField displayNameInput;
     [SerializeField] private TMP_InputField graduationYearInput;
-    [SerializeField] private Toggle keepLoginInfo;
+    // [SerializeField] private Toggle keepLoginInfo;
 
     public void OnSaveInitialSetting()
     {
@@ -25,12 +25,9 @@ public class InitialSetting : AbstractPlayFabLoginAndSignup
             messageText.color = Color.red;
         }
         else
-        {
-            if(keepLoginInfo.isOn)
-            {
-                LinkCustomId(SystemInfo.deviceUniqueIdentifier);
-            }
-            
+        {   
+            PlayFabData.MyName = displayNameInput.text;
+            PlayFabData.MyGraduationYear = graduationYearInput.text;
             SetUserData();
         }
     }
@@ -49,7 +46,6 @@ public class InitialSetting : AbstractPlayFabLoginAndSignup
             {
                 {"DisplayName", displayNameInput.text},
                 {"GraduationYear", graduationYearInput.text},
-                {"KeepLoginInfo", keepLoginInfo.isOn.ToString()}
             }
         };
         PlayFabClientAPI.UpdateUserData(request, result => OnSetUserDataSuccess(), error => {Debug.Log("プレイヤーデータの更新失敗" + error.GenerateErrorReport());});

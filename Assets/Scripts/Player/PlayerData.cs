@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
@@ -6,6 +7,7 @@ using PlayFab.ClientModels;
 using TMPro;
 using Newtonsoft.Json;
 using UnityEditor;
+
 
 public class PlayerData : NetworkBehaviour
 {
@@ -26,21 +28,37 @@ public class PlayerData : NetworkBehaviour
 
     private bool isOnline;
     
+    private ChatManager chatManager;
 
 
     private void Start()
     {
-        isOnline = true;
-        SetUserData();
+        chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
+        
         if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
         {
-            Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            isOnline = true;
+            
+            DisplayName = PlayFabData.MyName;
+            GraduationYear = PlayFabData.MyGraduationYear;
+            // 自分のテキストUIを設定
+            TextDisplayName.SetText(DisplayName);
+            SetUserData();
+            chatManager.chatSender = GetComponent<ChatSender>();
         }
         else
         {
+            Debug.Log("start" + DisplayName);
             // 他ユーザーのテキストUIを設定
-            Invoke("SetTextDisplayName", 1f); // すぐに実行すると反映されていないため1秒後に実行
+            Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
+        Invoke("AddDictDMScripts", 1f);
+    }
+
+    private void AddDictDMScripts()
+    {
+        PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
     }
 
     private void SetTextDisplayName()
@@ -57,7 +75,6 @@ public class PlayerData : NetworkBehaviour
     {
         DisplayName = result.InfoResultPayload.UserData["DisplayName"].Value;
         GraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
-        KeepLoginInfo = result.InfoResultPayload.UserData["KeepLoginInfo"].Value == "True" ? true : false;
         // 自分のテキストUIを設定
         TextDisplayName.SetText(DisplayName);
     }
@@ -65,18 +82,56 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        Debug.Log("despauwnd");
         base.Despawned(runner, true);
+        if (this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        {
+            isOnline = false;
+            PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
+            PlayFabData.DictChannelScripts = new Dictionary<string, ChannelButton>();
+            PlayFabData.CurrentChannelId = "general";
+        }
+    }
+
+    private void OnDestroy()
+    {
         isOnline = false;
         SetUserData();
+    }
+
+    void OnExitButtonClicked()
+    {
+
+    }
+
+    void OnApplicationQuit()
+    {
+        isOnline = false;
+        // StartCoroutine(SetUserData());
+        // SetUserData();
+
     }
 
     private void SetUserData()
     {
         var request = new UpdateUserDataRequest
         {
-            Data = new Dictionary<string, string>{{"IsOnline", isOnline.ToString()}},
+            Data = new Dictionary<string, string>{{"IsOnline", isOnline.ToString()}, },
             Permission = UserDataPermission.Public
         };
-        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("IsOnline変更成功"), _=> Debug.Log("IsOnline変更失敗"));
+        PlayFabClientAPI.UpdateUserData(request, 
+            _ => 
+            {
+                Debug.Log("IsOnline変更成功");
+                if (isOnline == false)
+                {
+                    PlayFabSettings.staticPlayer.ForgetAllCredentials();
+                }
+            }, 
+            _=> 
+            {
+                Debug.Log("IsOnline変更失敗");
+            }
+        );
     }
 }
