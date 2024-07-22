@@ -29,7 +29,7 @@
 
 # Unity YAML
 *.anim                  unity-yaml
-*.asset                 unity-yaml
+*.asset                 unity-yaml lfs
 *.brush                 unity-yaml
 *.controller            unity-yaml
 *.flare                 unity-yaml
@@ -164,4 +164,4 @@ LightningData.asset     binary
 *.cs text eol=lf
 
 # 特定のファイルに対するLFSの設定
-"Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset" filter=lfs diff=lfs merge=lfs -text
+# "Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset" filter=lfs diff=lfs merge=lfs -text
