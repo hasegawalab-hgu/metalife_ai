@@ -161,7 +161,7 @@ Assets/Plugins/**       linguist-vendored
 LightningData.asset     binary
 
 # テキストファイルの改行コードを自動で管理する
-* text=auto
+* text=lf
 
 # C#ファイルは常にLFを使用する
 *.cs text eol=lf
