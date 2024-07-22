@@ -173,3 +173,5 @@ LightningData.asset     binary
 *.dll binary
 *.dll.meta binary
 
+# CRLF を LF に変換
+Assets/Photon/* text eol=lf
