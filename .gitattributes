@@ -168,10 +168,3 @@ LightningData.asset     binary
 
 # 特定のファイルに対するLFSの設定
 "Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset" filter=lfs diff=lfs merge=lfs -text
-
-# バイナリファイルには改行変換を行わない
-*.dll binary
-*.dll.meta binary
-
-# CRLF を LF に変換
-Assets/Photon/* text eol=lf
