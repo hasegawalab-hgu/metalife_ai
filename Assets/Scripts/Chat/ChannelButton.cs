@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using PlayFab;
+using PlayFab.ClientModels;
+using Newtonsoft.Json;
 
 public class ChannelButton : MonoBehaviour
 {
@@ -15,7 +18,7 @@ public class ChannelButton : MonoBehaviour
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         GetComponent<Button>().onClick.AddListener(OnClickButton);
-        
+        GetSharedGroupData(true);
     }
 
     public void OnClickButton()
@@ -52,5 +55,28 @@ public class ChannelButton : MonoBehaviour
         {
             chatUIManager.DisplayMessage(messagedata);
         }
+    }
+
+    private void GetSharedGroupData(bool calledByStart)
+    {
+        var request = new GetSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+        };
+
+        PlayFabClientAPI.GetSharedGroupData(request, 
+            result => 
+            {
+                if (result.Data.ContainsKey(channelData.ChannelId))
+                {
+                    messageDatas = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[channelData.ChannelId].Value);
+                    if(PlayFabData.CurrentChannelId == channelData.ChannelId && calledByStart)
+                    {
+                        OnClickButton();
+                    }
+                }
+            }, 
+            e => e.GenerateErrorReport()
+        );
     }
 }
