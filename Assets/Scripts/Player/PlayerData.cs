@@ -96,7 +96,7 @@ public class PlayerData : NetworkBehaviour
     private void OnDestroy()
     {
         isOnline = false;
-        SetUserData();
+        // SetUserData();
     }
 
     void OnExitButtonClicked()

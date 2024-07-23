@@ -236,8 +236,8 @@ public class ChatUIManager : MonoBehaviour
 
         if(messageData.ChannelId == "DM")
         {
+            // playfab共有データのキーを決定、key: id+id
             int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
-            Debug.Log(result);
             if(result == 0) // 自分宛のDM
             {
                 key = messageData.SenderId;
@@ -251,6 +251,7 @@ public class ChatUIManager : MonoBehaviour
                 key = messageData.ReceiverId + "+" + messageData.SenderId;
             }
 
+            
             if(id == messageData.SenderId)
             {
                 PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas.Add(messageData);
@@ -270,7 +271,7 @@ public class ChatUIManager : MonoBehaviour
             key = messageData.ChannelId;
         }
         
-        if(!string.IsNullOrEmpty(key))
+        if(!string.IsNullOrEmpty(key) && datas.Count != 0)
         {
             string jsonData = JsonConvert.SerializeObject(datas);
             var request = new UpdateSharedGroupDataRequest

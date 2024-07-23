@@ -18,9 +18,10 @@ public class ChatSender : NetworkBehaviour
     {
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        Debug.Log(HasInputAuthority);
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_SendMessageRequest(string senderId, string receiverId, string channelId, string content, string timestamp)
     {
         if(HasStateAuthority)

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4779273041822333441}
   - component: {fileID: 5719736978430424533}
   - component: {fileID: -6388624459957695743}
-  - component: {fileID: 4061599552109741061}
+  - component: {fileID: 8561533212190656558}
   m_Layer: 0
   m_Name: PlayerCaracter
   m_TagString: Untagged
@@ -110,7 +110,7 @@ MonoBehaviour:
   - {fileID: 4779273041822333441}
   - {fileID: 5719736978430424533}
   - {fileID: -6388624459957695743}
-  - {fileID: 4061599552109741061}
+  - {fileID: 8561533212190656558}
 --- !u!114 &4779273041822333441
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
   _DisplayName: 
   _GraduationYear: 
   _KeepLoginInfo: 0
---- !u!114 &4061599552109741061
+--- !u!114 &8561533212190656558
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -258,7 +258,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6007946182581794327, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
+  - {fileID: 6969550635568745350, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -303,7 +303,7 @@ MonoBehaviour:
   m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
-  m_sharedMaterial: {fileID: -6007946182581794327, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
+  m_sharedMaterial: {fileID: 6969550635568745350, guid: 93ad747a00b1549dcaf844dd2700abc6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

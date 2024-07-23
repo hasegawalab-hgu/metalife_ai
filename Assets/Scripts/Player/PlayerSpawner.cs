@@ -19,6 +19,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(0, 0, 0), inputAuthority: this.Runner.LocalPlayer);
             localPlayer.GetComponent<PlayerData>().PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
             localPlayer.name = "LocalPlayer";
+            GameObject.Find("Main Camera").transform.SetParent(localPlayer.transform);
             Debug.Log(localPlayer.GetComponent<PlayerData>().PlayFabId);
         }
         else

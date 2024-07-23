@@ -46,8 +46,6 @@ public class ChatManager : MonoBehaviour
 
     private ChannelData addChannelData; // 追加するチャンネルデータ
 
-    private MessageData receivedMessageData;
-
     public ChatSender chatSender;
 
 
