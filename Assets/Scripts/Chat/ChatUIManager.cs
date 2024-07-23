@@ -229,18 +229,59 @@ public class ChatUIManager : MonoBehaviour
     }
     */
     
-    public void UpdateChannelMessageData(MessageData messageData)
+    public void UpdateChannelMessageData(string id, MessageData messageData)
     {
-        List<MessageData> Datas = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas;
-        Datas.Add(messageData);
-        string jsonData = JsonConvert.SerializeObject(Datas);
-        var request = new UpdateSharedGroupDataRequest
+        List<MessageData> datas = new List<MessageData>();
+        string key = "";
+
+        if(messageData.ChannelId == "DM")
         {
-            SharedGroupId = PlayFabData.CurrentSharedGroupId,
-            Data = new Dictionary<string, string> { { messageData.ChannelId,  jsonData} },
-            Permission = UserDataPermission.Public
-        };
-        PlayFabClientAPI.UpdateSharedGroupData(request, _ => Debug.Log("共有グループデータの変更成功"), _ => Debug.Log("共有グループデータの変更失敗"));
+            // playfab共有データのキーを決定、key: id+id
+            int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
+            if(result == 0) // 自分宛のDM
+            {
+                key = messageData.SenderId;
+            }
+            else if(result == -1)
+            {
+                key = messageData.SenderId + "+" + messageData.ReceiverId;
+            }
+            else if(result == 1)
+            {
+                key = messageData.ReceiverId + "+" + messageData.SenderId;
+            }
+
+            
+            if(id == messageData.SenderId)
+            {
+                PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas.Add(messageData);
+                datas = PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas;
+            }
+            else
+            {
+                PlayFabData.DictDMScripts[messageData.SenderId].messageDatas.Add(messageData);
+                datas = PlayFabData.DictDMScripts[messageData.SenderId].messageDatas;
+                
+            }
+        }
+        else if (messageData.ReceiverId == "All")
+        {
+            PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas.Add(messageData);
+            datas = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas;
+            key = messageData.ChannelId;
+        }
+        
+        if(!string.IsNullOrEmpty(key) && datas.Count != 0)
+        {
+            string jsonData = JsonConvert.SerializeObject(datas);
+            var request = new UpdateSharedGroupDataRequest
+            {
+                SharedGroupId = PlayFabData.CurrentSharedGroupId,
+                Data = new Dictionary<string, string> { { key,  jsonData} },
+                Permission = UserDataPermission.Public
+            };
+            PlayFabClientAPI.UpdateSharedGroupData(request, _ => Debug.Log("共有グループデータの変更成功"), _ => Debug.Log("共有グループデータの変更失敗"));
+        }
     }
 
     public void OnClickSubmitButton()

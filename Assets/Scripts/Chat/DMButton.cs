@@ -2,6 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using PlayFab;
+using PlayFab.ClientModels;
+using UnityEditor;
+using Newtonsoft.Json;
 
 public class DMButton : MonoBehaviour
 {
@@ -13,12 +17,28 @@ public class DMButton : MonoBehaviour
     private ChatUIManager chatUIManager;
     public string beforeSendText;
 
+    private string key;
+
     public List<MessageData> messageDatas = new List<MessageData>();
 
     void Start()
     {
+        int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, myId);
+        if(result == 0)
+        {
+            key = myId;
+        }
+        else if(result == -1)
+        {
+            key = PlayFabSettings.staticPlayer.PlayFabId + "+" + myId;
+        }
+        else if(result == 1)
+        {
+            key = myId + "+" + PlayFabSettings.staticPlayer.PlayFabId;
+        }
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         GetComponent<Button>().onClick.AddListener(OnClickButton);
+        GetSharedGroupData(true);
     }
 
     public void OnClickButton()
@@ -48,5 +68,28 @@ public class DMButton : MonoBehaviour
         {
             chatUIManager.DisplayMessage(messageData);
         }
+    }
+
+    private void GetSharedGroupData(bool calledByStart)
+    {
+        var request = new GetSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+        };
+
+        PlayFabClientAPI.GetSharedGroupData(request, 
+            result => 
+            {
+                if (!string.IsNullOrEmpty(key) & result.Data.ContainsKey(key))
+                {
+                    messageDatas = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[key].Value);
+                    if(PlayFabData.CurrentMessageTarget == myId && calledByStart)
+                    {
+                        OnClickButton();
+                    }
+                }
+            }, 
+            e => e.GenerateErrorReport()
+        );
     }
 }
