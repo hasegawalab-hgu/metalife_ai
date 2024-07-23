@@ -24,7 +24,7 @@
 *.uxml                  text linguist-language=xml linguist-detectable
 # Unity YAML
 *.anim                  unity-yaml
-*.asset                 unity-yaml filter=lfs diff=lfs merge=lfs
+*.asset                 unity-yaml
 *.brush                 unity-yaml
 *.controller            unity-yaml
 *.flare                 unity-yaml
@@ -142,5 +142,4 @@ LightningData.asset     binary
 # C#ファイルは常にLFを使用する
 *.cs text eol=lf
 # 特定のファイルに対するLFSの設定
-# "Assets/TextMesh Pro/Resources/Fonts & Materials/NotoSansJP-Medium SDF.asset" filter=lfs diff=lfs merge=lfs -text
-Assets/TextMesh[[:space:]]Pro/Resources/Fonts[[:space:]]&[[:space:]]Materials/NotoSansJP-Medium[[:space:]]SDF.asset filter=lfs diff=lfs merge=lfs -text
+

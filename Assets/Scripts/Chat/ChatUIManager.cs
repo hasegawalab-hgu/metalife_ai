@@ -98,7 +98,10 @@ public class ChatUIManager : MonoBehaviour
                     tx.text = value.ChannelName;
                 }
                 obj.gameObject.AddComponent<ChannelButton>().channelData = value;
-                PlayFabData.DictChannelScripts.Add(value.ChannelId, obj.GetComponent<ChannelButton>());
+                if (!PlayFabData.DictChannelScripts.ContainsKey(value.ChannelId))
+                {
+                    PlayFabData.DictChannelScripts.Add(value.ChannelId, obj.GetComponent<ChannelButton>());
+                }
             }
         }
     }
@@ -128,6 +131,7 @@ public class ChatUIManager : MonoBehaviour
 
     public void OnClickReturn()
     {
+        addMemberToggles = new List<Toggle>();
         panel_createChannel.SetActive(false);
         panel_CHDM.SetActive(true);
 
@@ -155,7 +159,7 @@ public class ChatUIManager : MonoBehaviour
             }
 
             int rand = Random.Range(0, 10000);
-                chatManager.CreatChannel(channelName.text + rand.ToString(), channelName.text, ids, dd_channelType.captionText.text);
+            chatManager.CreatChannel(channelName.text + rand.ToString(), channelName.text, ids, dd_channelType.captionText.text);
         }
     }
 
