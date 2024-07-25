@@ -9,12 +9,18 @@ using ExitGames.Client.Photon.StructWrapping;
 using UnityEngine.Networking.PlayerConnection;
 using Newtonsoft.Json;
 using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEngine.SocialPlatforms;
 
 public class ChatUIManager : MonoBehaviour
 {
     private ChatManager chatManager;
+    private LocalGameManager lgm;
+    [SerializeField]
+    public Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
 
     // chat画面のUI
+    [SerializeField]
+    private GameObject ChatUI;
     [SerializeField]
     private GameObject spawner_channel;
     [SerializeField]
@@ -33,6 +39,10 @@ public class ChatUIManager : MonoBehaviour
     private TMP_Text text_messagePref; // prefab
     [SerializeField]
     public TMP_Text text_channelName;
+    [SerializeField]
+    public ScrollRect scrollRect; // scrollview
+    [SerializeField]
+    public ContentSizeFitter csf; // contentのcontentsizefilter
 
     // channel作成時に使用
     [SerializeField]
@@ -62,10 +72,36 @@ public class ChatUIManager : MonoBehaviour
 
     void Start()
     {
+        DictReadMessageCount = PlayFabData.DictReadMessageCount;
         chatManager = GetComponent<ChatManager>();
+        lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+        csf = spawner_message.GetComponent<ContentSizeFitter>();
         text_channelName.text = "# " + PlayFabData.CurrentRoomChannels[PlayFabData.CurrentChannelId].ChannelName; // generalなので#をつける
         DisplayChannelTargets();
         DisplayDMTargets();
+    }
+
+    void Update()
+    {
+        // InputFieldがアクティブでEnterキーが押されたときの処理
+        if (inputField.isFocused && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+        {
+            // ただし、Shift + Enterの場合は新しい行を挿入
+            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+            {
+                OnClickSubmitButton();
+            }
+        }
+        //Debug.Log(LocalGameManager.LocalGameState);
+        // UIを表示、非表示する処理
+        if(lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        {
+            ChatUI.SetActive(false);
+        }
+        else if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
+        {
+            ChatUI.SetActive(true);
+        }
     }
     
     public void DestroyChildren(Transform root)
@@ -74,6 +110,17 @@ public class ChatUIManager : MonoBehaviour
         {
             Destroy(child.gameObject);
         }   
+    }
+
+    // inputFieldの編集終了（Ctrl + Enter or Command + Enter）
+    public void OnEditEnd()
+    {
+        // ctrl + enter   or   command + enter でsubmit
+
+        if(Input.GetKeyDown(KeyCode.Return))
+        {
+            OnClickSubmitButton();
+        }
     }
 
     public void DisplayChannelTargets()
@@ -103,6 +150,11 @@ public class ChatUIManager : MonoBehaviour
                     PlayFabData.DictChannelScripts.Add(value.ChannelId, obj.GetComponent<ChannelButton>());
                 }
             }
+
+            if(!DictReadMessageCount.ContainsKey(value.ChannelId))
+            {
+                DictReadMessageCount.Add(value.ChannelId, 0); // 0個しか既読していないという意味(すべて未読)
+            }
         }
     }
 
@@ -120,15 +172,29 @@ public class ChatUIManager : MonoBehaviour
             script.myId = player.Key;
             script.myName = player.Value;
 
+            int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, script.myId);
+            if(result == 0)
+            {
+                script.key = script.myId;
+            }
+            else if(result == -1)
+            {
+                script.key = PlayFabSettings.staticPlayer.PlayFabId + "+" + script.myId;
+            }
+            else if(result == 1)
+            {
+                script.key = script.myId + "+" + PlayFabSettings.staticPlayer.PlayFabId;
+            }
+
+            if(!DictReadMessageCount.ContainsKey(script.key))
+            {
+                DictReadMessageCount.Add(script.key, 0); // 0個しか既読していないという意味(すべて未読)
+            }
             PlayFabData.DictDMScripts.Add(player.Key, script);
         }
     }
 
-    public void OnClickSubmit()
-    {
-
-    }
-
+    // returnボタン
     public void OnClickReturn()
     {
         addMemberToggles = new List<Toggle>();
@@ -196,6 +262,7 @@ public class ChatUIManager : MonoBehaviour
         }
     }
 
+    // channelType
     public void OnValueChangedChannelType(TMP_Dropdown dd)
     {
         Debug.Log("valueChanged: " + dd.value);
@@ -209,66 +276,18 @@ public class ChatUIManager : MonoBehaviour
             panel_Members.SetActive(false);
         }
     }
-
-    /*
-    public List<ChannelData> GetChannelMessageData(string channelId)
-    {
-        var request = new GetSharedGroupDataRequest
-        {
-            SharedGroupId = PlayFabData.CurrentSharedGroupId,
-            Keys = new List<string>(){channelId}
-        };
-        PlayFabClientAPI.GetSharedGroupData(request, 
-            result => 
-            {
-                return JsonConvert.DeserializeObject<List<ChannelData>>(result.Data[channelId].Value);
-            },
-            e => 
-        );
-        return new List<ChannelData>();
-    }
-    */
     
-    public void UpdateChannelMessageData(string id, MessageData messageData)
+    public void UpdateChannelMessageData(string key, MessageData messageData)
     {
         List<MessageData> datas = new List<MessageData>();
-        string key = "";
 
         if(messageData.ChannelId == "DM")
         {
-            // playfab共有データのキーを決定、key: id+id
-            int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
-            if(result == 0) // 自分宛のDM
-            {
-                key = messageData.SenderId;
-            }
-            else if(result == -1)
-            {
-                key = messageData.SenderId + "+" + messageData.ReceiverId;
-            }
-            else if(result == 1)
-            {
-                key = messageData.ReceiverId + "+" + messageData.SenderId;
-            }
-
-            
-            if(id == messageData.SenderId)
-            {
-                PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas.Add(messageData);
-                datas = PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas;
-            }
-            else
-            {
-                PlayFabData.DictDMScripts[messageData.SenderId].messageDatas.Add(messageData);
-                datas = PlayFabData.DictDMScripts[messageData.SenderId].messageDatas;
-                
-            }
+            datas = PlayFabData.DictDMScripts[messageData.ReceiverId].messageDatas; // 送信者のみがこのメソッドを読んでいるのでキーは受信者のID
         }
         else if (messageData.ReceiverId == "All")
         {
-            PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas.Add(messageData);
             datas = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas;
-            key = messageData.ChannelId;
         }
         
         if(!string.IsNullOrEmpty(key) && datas.Count != 0)
@@ -280,21 +299,41 @@ public class ChatUIManager : MonoBehaviour
                 Data = new Dictionary<string, string> { { key,  jsonData} },
                 Permission = UserDataPermission.Public
             };
-            PlayFabClientAPI.UpdateSharedGroupData(request, _ => Debug.Log("共有グループデータの変更成功"), _ => Debug.Log("共有グループデータの変更失敗"));
+            PlayFabClientAPI.UpdateSharedGroupData(request, 
+                _ => 
+                {
+                    Debug.Log("共有グループデータの変更成功"); 
+                    //UpdateUserData();
+                }, 
+                _ => Debug.Log("共有グループデータの変更失敗")
+            );
         }
+    }
+
+    public void UpdateUserData()
+    {   
+        string jsonData = JsonConvert.SerializeObject(DictReadMessageCount);
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>(){ {"DictReadMessageCount", jsonData} }
+        };
+        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("DictReadMessageCount更新成功"), e => e.GenerateErrorReport());
     }
 
     public void OnClickSubmitButton()
     {
         if(!string.IsNullOrEmpty(inputField.text))
         {
+            string text = inputField.text;
             string receiverId = PlayFabData.CurrentMessageTarget;
+
+            inputField.text = "";
+            scrollRect.verticalNormalizedPosition = 0; // scrollviewを一番下にする
 
             PlayFabClientAPI.GetTime(new GetTimeRequest(), 
                 result =>
                 {
-                    chatManager.chatSender.RPC_SendMessageRequest(PlayFabSettings.staticPlayer.PlayFabId, receiverId, PlayFabData.CurrentChannelId, inputField.text, result.Time.AddHours(9d).ToString());
-                    inputField.text = "";
+                    chatManager.chatSender.RPC_SendMessageRequest(PlayFabSettings.staticPlayer.PlayFabId, receiverId, PlayFabData.CurrentChannelId, text, result.Time.AddHours(9d).ToString());
                 },
                 _ => Debug.Log("時間取得失敗")
             );
@@ -305,6 +344,15 @@ public class ChatUIManager : MonoBehaviour
     {
         var obj = Instantiate(text_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
         obj.transform.SetParent(spawner_message.transform);
-        obj.GetComponent<TMP_Text>().text = messageData.Content;
+        obj.GetComponent<TMP_Text>().text = PlayFabData.CurrentRoomPlayers[messageData.SenderId] + ": " + messageData.Content;
+        csf.SetLayoutVertical(); // 高さ調整を無理やりさせる、スクロールバーを一番下に下げるために先に変更させておく
+        Invoke("MoveToBottom", 0.1f); // contentのcsfが高さ計算をするのに時間がかかるため少し待ってから一番下にする
+    }
+
+
+    // スクロールバーを一番下まで移動させる
+    public void MoveToBottom()
+    {
+        scrollRect.verticalNormalizedPosition = 0f;
     }
 }

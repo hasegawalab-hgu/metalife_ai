@@ -6,6 +6,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using UnityEditor;
 using Newtonsoft.Json;
+using TMPro;
 
 public class DMButton : MonoBehaviour
 {
@@ -17,28 +18,31 @@ public class DMButton : MonoBehaviour
     private ChatUIManager chatUIManager;
     public string beforeSendText;
 
-    private string key;
+    public int UnReadMessageCount = 0;
+
+    public string key;
 
     public List<MessageData> messageDatas = new List<MessageData>();
+    private TMP_Text unReadText;
 
     void Start()
     {
-        int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, myId);
-        if(result == 0)
-        {
-            key = myId;
-        }
-        else if(result == -1)
-        {
-            key = PlayFabSettings.staticPlayer.PlayFabId + "+" + myId;
-        }
-        else if(result == 1)
-        {
-            key = myId + "+" + PlayFabSettings.staticPlayer.PlayFabId;
-        }
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        unReadText = GetComponentsInChildren<TMP_Text>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
         GetSharedGroupData(true);
+
+        UnReadMessageCount = messageDatas.Count - chatUIManager.DictReadMessageCount[key];
+    }
+
+    void Update()
+    {
+        unReadText.text = UnReadMessageCount.ToString();
+    }
+
+    void OnDestroy()
+    {
+        GetComponent<Button>().onClick.RemoveListener(OnClickButton);
     }
 
     public void OnClickButton()
@@ -68,6 +72,20 @@ public class DMButton : MonoBehaviour
         {
             chatUIManager.DisplayMessage(messageData);
         }
+
+        chatUIManager.DictReadMessageCount[key] = messageDatas.Count;
+        UnReadMessageCount = 0;
+        UpdateUserData();
+    }
+
+    private void UpdateUserData()
+    {   
+        string jsonData = JsonConvert.SerializeObject(chatUIManager.DictReadMessageCount);
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>(){ {"DictReadMessageCount", jsonData} }
+        };
+        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("DictReadMessageCount更新成功"), e => e.GenerateErrorReport());
     }
 
     private void GetSharedGroupData(bool calledByStart)
@@ -83,6 +101,8 @@ public class DMButton : MonoBehaviour
                 if (!string.IsNullOrEmpty(key) & result.Data.ContainsKey(key))
                 {
                     messageDatas = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[key].Value);
+                    UnReadMessageCount = messageDatas.Count - chatUIManager.DictReadMessageCount[key];
+
                     if(PlayFabData.CurrentMessageTarget == myId && calledByStart)
                     {
                         OnClickButton();

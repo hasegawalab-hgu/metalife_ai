@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using PlayFab;
 using PlayFab.ClientModels;
 using Newtonsoft.Json;
+using TMPro;
 
 public class ChannelButton : MonoBehaviour
 {
@@ -13,12 +14,27 @@ public class ChannelButton : MonoBehaviour
     public string beforeSendText;
     public List<MessageData> messageDatas = new List<MessageData>();
 
+    public int UnReadMessageCount = 0;
+    private TMP_Text unReadText;
+
 
     void Start()
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        unReadText = GetComponentsInChildren<TMP_Text>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
         GetSharedGroupData(true);
+        Debug.Log(messageDatas.Count + " :::: " + chatUIManager.DictReadMessageCount[channelData.ChannelId]);
+    }
+
+    void Update()
+    {
+        unReadText.text = UnReadMessageCount.ToString();
+    }
+
+    void OnDestroy()
+    {
+        GetComponent<Button>().onClick.RemoveListener(OnClickButton);
     }
 
     public void OnClickButton()
@@ -54,7 +70,22 @@ public class ChannelButton : MonoBehaviour
         foreach(MessageData messagedata in messageDatas)
         {
             chatUIManager.DisplayMessage(messagedata);
+            chatUIManager.scrollRect.verticalNormalizedPosition = 0f; // スクロールバーを一番下まで下げる
         }
+
+        chatUIManager.DictReadMessageCount[channelData.ChannelId] = messageDatas.Count;
+        UnReadMessageCount = 0;
+        UpdateUserData();
+    }
+
+    private void UpdateUserData()
+    {   
+        string jsonData = JsonConvert.SerializeObject(chatUIManager.DictReadMessageCount);
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>(){ {"DictReadMessageCount", jsonData} }
+        };
+        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("DictReadMessageCount更新成功"), e => e.GenerateErrorReport());
     }
 
     private void GetSharedGroupData(bool calledByStart)
@@ -70,9 +101,12 @@ public class ChannelButton : MonoBehaviour
                 if (result.Data.ContainsKey(channelData.ChannelId))
                 {
                     messageDatas = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[channelData.ChannelId].Value);
+                    UnReadMessageCount = messageDatas.Count - chatUIManager.DictReadMessageCount[channelData.ChannelId];
+
                     if(PlayFabData.CurrentChannelId == channelData.ChannelId && calledByStart)
                     {
                         OnClickButton();
+                        // chatUIManager.scrollRect.verticalNormalizedPosition = 0; // scrollviewを一番下にする
                     }
                 }
             }, 
