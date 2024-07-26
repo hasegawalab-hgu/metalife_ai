@@ -56,21 +56,10 @@ public class ChatSender : NetworkBehaviour
                 string targetId = senderId == PlayFabSettings.staticPlayer.PlayFabId ? receiverId : receiverId == PlayFabSettings.staticPlayer.PlayFabId ? senderId : "";
                 PlayFabData.DictDMScripts[targetId].messageDatas.Add(messageData); // ローカルのメッセージデータを保存
 
-                // playfab共有データのキーを決定、key: id+id
+
+                // playfab共有データのキーを決定、key: id+id (Compare()で比較して若い方が先)    
                 int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
-                if(result == 0) // 自分宛のDM
-                {
-                    key = messageData.SenderId;
-                }
-                else if(result == -1)
-                {
-                    key = messageData.SenderId + "+" + messageData.ReceiverId;
-                }
-                else if(result == 1)
-                {
-                    key = messageData.ReceiverId + "+" + messageData.SenderId;
-                }
-                
+                key = result == -1 ? messageData.SenderId + "+" + messageData.ReceiverId : result == 1 ? messageData.ReceiverId + "+" + messageData.SenderId : messageData.SenderId;
 
                 if((senderId == PlayFabSettings.staticPlayer.PlayFabId & PlayFabData.CurrentMessageTarget == targetId) || // 送信者が送信先のDMを開いている時
                     (senderId != PlayFabSettings.staticPlayer.PlayFabId & PlayFabData.CurrentMessageTarget == senderId)   // 受信者が受信先のDMを開いている時
@@ -109,7 +98,7 @@ public class ChatSender : NetworkBehaviour
             // 送信者であれば既読数とデータベースを更新
             if(!string.IsNullOrEmpty(key) & senderId == PlayFabSettings.staticPlayer.PlayFabId)
             {
-                chatUIManager.DictReadMessageCount[channelId] = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas.Count; // 既読数を更新
+                chatUIManager.DictReadMessageCount[key] = PlayFabData.DictChannelScripts[key].messageDatas.Count; // 既読数を更新
                 chatUIManager.UpdateUserData(); // 既読数のデータベースを更新
                 chatUIManager.UpdateChannelMessageData(key, messageData); // メッセージデータのデータベースを更新
             }

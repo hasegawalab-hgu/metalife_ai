@@ -29,10 +29,10 @@ public class PlayerData : NetworkBehaviour
     private bool isOnline;
     
     private ChatManager chatManager;
-
+    private NetworkRunner runner;
 
     private void Start()
-    {
+    {   
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         
         if(Object.HasInputAuthority)
@@ -46,31 +46,36 @@ public class PlayerData : NetworkBehaviour
             TextDisplayName.SetText(DisplayName);
             SetUserData();
             chatManager.chatSender = GetComponent<ChatSender>();
+            Invoke("CheckDoubleLogin", 0.1f);
         }
         else
         {
+            PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
             Debug.Log("start" + DisplayName);
+            
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
         //Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId]);
         Invoke("AddDictDMScripts", 1.5f);
+    }
 
-        Debug.Log(HasInputAuthority);
-
-        if(Object != null)
+    private void CheckDoubleLogin()
+    {
+        if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(this.PlayFabId))
         {
-            Debug.Log(Object);
+            Debug.LogError("このアカウントは別の端末でログインしています。");
+            GameObject.Find("Logout").GetComponent<PlayFabLogout>().OnClickLogout();
         }
         else
         {
-            Debug.Log("null");
+            PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
         }
     }
 
     private void AddDictDMScripts()
     {
-        if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
+        if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId) & PlayFabData.DictDMScripts[this.PlayFabId].playerInstance == null)
         {
             PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
         }
@@ -103,7 +108,6 @@ public class PlayerData : NetworkBehaviour
     {
         Debug.Log("despauwnd");
         base.Despawned(runner, true);
-        
         if (Object.HasInputAuthority)
         {
             isOnline = false;

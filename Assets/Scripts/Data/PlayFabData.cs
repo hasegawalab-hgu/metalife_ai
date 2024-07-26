@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 
 public class PlayFabData : MonoBehaviour
@@ -17,7 +18,7 @@ public class PlayFabData : MonoBehaviour
     public static string CurrentSharedGroupId; // 現在入室しているルームのグループ、今後選択する画面を作成
     public static Dictionary<string, ChannelData> CurrentRoomChannels = new Dictionary<string, ChannelData>();
     public static Dictionary<string, string> CurrentRoomPlayers = new Dictionary<string, string>(); // key: id, value: displayName
-
+    public static Dictionary<string, PlayerData> CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();
     public static Dictionary<string, DMButton> DictDMScripts = new Dictionary<string, DMButton>();
     public static Dictionary<string, ChannelButton> DictChannelScripts = new Dictionary<string, ChannelButton>();
 

@@ -21,23 +21,50 @@ public class DMButton : MonoBehaviour
     public int UnReadMessageCount = 0;
 
     public string key;
-
+    private Image outline;
+    private Image image;
     public List<MessageData> messageDatas = new List<MessageData>();
+    private TMP_Text text;
     private TMP_Text unReadText;
+    private Color initialColorOutline;
+    private Color initialColorText;
+    
 
     void Start()
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        text = GetComponentsInChildren<TMP_Text>()[0];
         unReadText = GetComponentsInChildren<TMP_Text>()[1];
+        outline = GetComponentsInChildren<Image>()[0];
+        image = GetComponentsInChildren<Image>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
         GetSharedGroupData(true);
-
-        UnReadMessageCount = messageDatas.Count - chatUIManager.DictReadMessageCount[key];
+        initialColorOutline = outline.color;
+        initialColorText = text.color;
     }
 
     void Update()
     {
-        unReadText.text = UnReadMessageCount.ToString();
+        if(UnReadMessageCount <= 0)
+        {
+            image.gameObject.SetActive(false);
+        }
+        else
+        {
+            image.gameObject.SetActive(true);
+            unReadText.text = UnReadMessageCount.ToString();
+        }
+
+        if(playerInstance != null)
+        {
+            //outline.color = Color.green;
+            text.color = Color.green;
+        }
+        else
+        {
+            //outline.color = initialColorOutline;
+            text.color = initialColorText;
+        }
     }
 
     void OnDestroy()
@@ -47,9 +74,11 @@ public class DMButton : MonoBehaviour
 
     public void OnClickButton()
     {
+        chatUIManager.DisplayedMessageCount = 0;
+
         if(PlayFabData.CurrentChannelId == "DM")
         {
-            PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
+            PlayFabData.DictDMScripts[myId].beforeSendText = chatUIManager.inputField.text;
             chatUIManager.inputField.text = "";
         }
         else if(PlayFabData.CurrentMessageTarget == "All")

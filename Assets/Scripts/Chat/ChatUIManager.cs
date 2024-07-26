@@ -5,18 +5,14 @@ using TMPro;
 using UnityEngine.UI;
 using PlayFab.ClientModels;
 using PlayFab;
-using ExitGames.Client.Photon.StructWrapping;
-using UnityEngine.Networking.PlayerConnection;
 using Newtonsoft.Json;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEngine.SocialPlatforms;
 
 public class ChatUIManager : MonoBehaviour
 {
     private ChatManager chatManager;
     private LocalGameManager lgm;
-    [SerializeField]
     public Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
+    public int DisplayedMessageCount = 0;
 
     // chat画面のUI
     [SerializeField]
@@ -37,6 +33,12 @@ public class ChatUIManager : MonoBehaviour
     public GameObject spawner_message;
     [SerializeField]
     private TMP_Text text_messagePref; // prefab
+    [SerializeField]
+    private TMP_Text text_senderPref; // prefab
+    [SerializeField]
+    private TMP_Text text_timestampPref; // prefab
+    [SerializeField]
+    private TMP_Text text_UnReadPref; // prefab 文字記入済み
     [SerializeField]
     public TMP_Text text_channelName;
     [SerializeField]
@@ -83,15 +85,9 @@ public class ChatUIManager : MonoBehaviour
 
     void Update()
     {
-        // InputFieldがアクティブでEnterキーが押されたときの処理
-        if (inputField.isFocused && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
-        {
-            // ただし、Shift + Enterの場合は新しい行を挿入
-            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
-            {
-                OnClickSubmitButton();
-            }
-        }
+        
+        CheckPressEnter();
+
         //Debug.Log(LocalGameManager.LocalGameState);
         // UIを表示、非表示する処理
         if(lgm.LocalGameState == LocalGameManager.GameState.Playing)
@@ -101,6 +97,25 @@ public class ChatUIManager : MonoBehaviour
         else if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
             ChatUI.SetActive(true);
+        }
+    }
+
+    private void CheckPressEnter()
+    {
+        //  IME日本語入力変換を使用しいるかどうかの判断
+        if(!(inputField.text.EndsWith("\n") || inputField.text.EndsWith("\r\n")))
+        {
+            return;
+        }
+
+        // InputFieldがアクティブでEnterキーが押されたときの処理
+        if (inputField.isFocused & (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+        {
+            // Shift + Enterの場合は新しい行を挿入、IMEがオンの時は送信しない
+            if (!Input.GetKey(KeyCode.LeftShift) & !Input.GetKey(KeyCode.RightShift))
+            {
+                OnClickSubmitButton();
+            }
         }
     }
     
@@ -173,18 +188,7 @@ public class ChatUIManager : MonoBehaviour
             script.myName = player.Value;
 
             int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, script.myId);
-            if(result == 0)
-            {
-                script.key = script.myId;
-            }
-            else if(result == -1)
-            {
-                script.key = PlayFabSettings.staticPlayer.PlayFabId + "+" + script.myId;
-            }
-            else if(result == 1)
-            {
-                script.key = script.myId + "+" + PlayFabSettings.staticPlayer.PlayFabId;
-            }
+            script.key = result == -1 ? PlayFabSettings.staticPlayer.PlayFabId + "+" + script.myId : result == 1 ? script.myId + "+" + PlayFabSettings.staticPlayer.PlayFabId : script.myId;
 
             if(!DictReadMessageCount.ContainsKey(script.key))
             {
@@ -333,7 +337,7 @@ public class ChatUIManager : MonoBehaviour
             PlayFabClientAPI.GetTime(new GetTimeRequest(), 
                 result =>
                 {
-                    chatManager.chatSender.RPC_SendMessageRequest(PlayFabSettings.staticPlayer.PlayFabId, receiverId, PlayFabData.CurrentChannelId, text, result.Time.AddHours(9d).ToString());
+                    chatManager.chatSender.RPC_SendMessageRequest(PlayFabSettings.staticPlayer.PlayFabId, receiverId, PlayFabData.CurrentChannelId, text, result.Time.AddHours(9d).ToString("yyyy/MM/dd HH:mm:ss:ffff"));
                 },
                 _ => Debug.Log("時間取得失敗")
             );
@@ -342,11 +346,61 @@ public class ChatUIManager : MonoBehaviour
 
     public void DisplayMessage(MessageData messageData)
     {
+        
+
+        List<MessageData> messageDatas = new List<MessageData>();
+        int readMessageCount = 0;
+        if(messageData.ChannelId == "DM") // DM
+        {
+            int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
+            string DMScriptsKey = messageData.SenderId == PlayFabSettings.staticPlayer.PlayFabId ? messageData.ReceiverId : messageData.SenderId;
+            messageDatas = PlayFabData.DictDMScripts[DMScriptsKey].messageDatas;
+
+            readMessageCount = PlayFabData.DictReadMessageCount[DMScriptsKey];
+        }
+        else // Channel
+        {
+            messageDatas = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas;
+
+            readMessageCount = PlayFabData.DictReadMessageCount[messageData.ChannelId];
+        }
+
+        // ここから未読メーセージの表示
+        
+        Debug.Log(DisplayedMessageCount + " ........... " + readMessageCount);
+        
+        if(messageData.SenderId != PlayFabSettings.staticPlayer.PlayFabId & DisplayedMessageCount == readMessageCount)
+        {
+            var unReadObj = Instantiate(text_UnReadPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+            unReadObj.transform.SetParent(spawner_message.transform);
+        }
+        
+
+        // 前のメッセージと日付が違うなら日付を表示
+        if(DisplayedMessageCount == 0 || messageDatas[DisplayedMessageCount - 1].Timestamp.Substring(0,10) != messageData.Timestamp.Substring(0,10))
+        {
+            var timestampObj = Instantiate(text_timestampPref ,new Vector3(0f, 0f, 0f), Quaternion.identity);
+            timestampObj.transform.SetParent(spawner_message.transform);
+            timestampObj.GetComponent<TMP_Text>().text = messageData.Timestamp.Substring(0,10);
+        }
+
+        // 前のメッセージと送信者が違うなら送信者を表示
+        if(DisplayedMessageCount == 0 || messageDatas[DisplayedMessageCount - 1].SenderId != messageData.SenderId)
+        {
+            var senderObj = Instantiate(text_senderPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+            senderObj.transform.SetParent(spawner_message.transform);
+            senderObj.GetComponent<TMP_Text>().text = PlayFabData.CurrentRoomPlayers[messageData.SenderId];
+        }
+
         var obj = Instantiate(text_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
         obj.transform.SetParent(spawner_message.transform);
-        obj.GetComponent<TMP_Text>().text = PlayFabData.CurrentRoomPlayers[messageData.SenderId] + ": " + messageData.Content;
+        obj.GetComponent<TMP_Text>().text = messageData.Content;
+        obj.GetComponentsInChildren<TMP_Text>()[1].text = messageData.Timestamp.Substring(0,19);
+
         csf.SetLayoutVertical(); // 高さ調整を無理やりさせる、スクロールバーを一番下に下げるために先に変更させておく
-        Invoke("MoveToBottom", 0.1f); // contentのcsfが高さ計算をするのに時間がかかるため少し待ってから一番下にする
+        Invoke("MoveToBottom", 0.05f); // contentのcsfが高さ計算をするのに時間がかかるため少し待ってから一番下にする
+
+        DisplayedMessageCount++;
     }
 
 

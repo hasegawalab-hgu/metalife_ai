@@ -10,11 +10,20 @@ using TMPro;
 public class ChannelButton : MonoBehaviour
 {
     public ChannelData channelData; // 生成される時に割り当てられる
+    public string myName;
+    public string myId;
+
+    public GameObject playerInstance;
+
     private ChatUIManager chatUIManager;
     public string beforeSendText;
-    public List<MessageData> messageDatas = new List<MessageData>();
 
     public int UnReadMessageCount = 0;
+
+    public string key;
+
+    public List<MessageData> messageDatas = new List<MessageData>();
+    private Image image;
     private TMP_Text unReadText;
 
 
@@ -22,14 +31,22 @@ public class ChannelButton : MonoBehaviour
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         unReadText = GetComponentsInChildren<TMP_Text>()[1];
+        image = GetComponentsInChildren<Image>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
         GetSharedGroupData(true);
-        Debug.Log(messageDatas.Count + " :::: " + chatUIManager.DictReadMessageCount[channelData.ChannelId]);
     }
 
     void Update()
     {
-        unReadText.text = UnReadMessageCount.ToString();
+        if(UnReadMessageCount <= 0)
+        {
+            image.gameObject.SetActive(false);
+        }
+        else
+        {
+            image.gameObject.SetActive(true);
+            unReadText.text = UnReadMessageCount.ToString();
+        }
     }
 
     void OnDestroy()
@@ -39,6 +56,8 @@ public class ChannelButton : MonoBehaviour
 
     public void OnClickButton()
     {
+        chatUIManager.DisplayedMessageCount = 0;
+
         if(PlayFabData.CurrentChannelId == "DM")
         {
             PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
@@ -67,6 +86,7 @@ public class ChannelButton : MonoBehaviour
         PlayFabData.CurrentMessageTarget = "All";
 
         chatUIManager.DestroyChildren(chatUIManager.spawner_message.transform);
+        
         foreach(MessageData messagedata in messageDatas)
         {
             chatUIManager.DisplayMessage(messagedata);
