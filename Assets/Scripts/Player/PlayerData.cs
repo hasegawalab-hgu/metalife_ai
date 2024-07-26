@@ -29,13 +29,13 @@ public class PlayerData : NetworkBehaviour
     private bool isOnline;
     
     private ChatManager chatManager;
-
+    private NetworkRunner runner;
 
     private void Start()
-    {
+    {   
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         
-        if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        if(Object.HasInputAuthority)
         {
             // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
             isOnline = true;
@@ -46,19 +46,43 @@ public class PlayerData : NetworkBehaviour
             TextDisplayName.SetText(DisplayName);
             SetUserData();
             chatManager.chatSender = GetComponent<ChatSender>();
+            Invoke("CheckDoubleLogin", 0.1f);
         }
         else
         {
+            PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
             Debug.Log("start" + DisplayName);
+            
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
-        Invoke("AddDictDMScripts", 1f);
+        //Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId]);
+        Invoke("AddDictDMScripts", 1.5f);
+    }
+
+    private void CheckDoubleLogin()
+    {
+        if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(this.PlayFabId))
+        {
+            Debug.LogError("このアカウントは別の端末でログインしています。");
+            GameObject.Find("Logout").GetComponent<PlayFabLogout>().OnClickLogout();
+        }
+        else
+        {
+            PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
+        }
     }
 
     private void AddDictDMScripts()
     {
-        PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
+        if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId) & PlayFabData.DictDMScripts[this.PlayFabId].playerInstance == null)
+        {
+            PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
+        }
+        else
+        {
+            Invoke("AddDictDMScripts", 1.0f);
+        }
     }
 
     private void SetTextDisplayName()
@@ -84,12 +108,13 @@ public class PlayerData : NetworkBehaviour
     {
         Debug.Log("despauwnd");
         base.Despawned(runner, true);
-        if (this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        if (Object.HasInputAuthority)
         {
             isOnline = false;
             PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
             PlayFabData.DictChannelScripts = new Dictionary<string, ChannelButton>();
             PlayFabData.CurrentChannelId = "general";
+            Debug.Log("despauwnd" + Object);
         }
     }
 

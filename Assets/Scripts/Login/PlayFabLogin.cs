@@ -52,8 +52,13 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
         PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
 
-        Debug.Log("カスタムIDでのログイン成功" + PlayFabData.MyName + result.InfoResultPayload.UserData["IsOnline"]);
+        Debug.Log("カスタムIDでのログイン成功");
         PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
+        
+        if(result.InfoResultPayload.UserData.ContainsKey("DictReadMessageCount"))
+        {
+            PlayFabData.DictReadMessageCount = JsonConvert.DeserializeObject<Dictionary<string, int>>(result.InfoResultPayload.UserData["DictReadMessageCount"].Value);
+        }
 
         /*
         if (result.InfoResultPayload.UserData["IsOnline"].Value == "True")

@@ -4,6 +4,7 @@ using Fusion;
 using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
+using Newtonsoft.Json;
 
 
 /// <summary>
@@ -18,26 +19,28 @@ public class ChatSender : NetworkBehaviour
     {
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
-        Debug.Log(HasInputAuthority);
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_SendMessageRequest(string senderId, string receiverId, string channelId, string content, string timestamp)
     {
+
         if(HasStateAuthority)
         {
-            RPC_SendMessage(PlayFabSettings.staticPlayer.PlayFabId, senderId, receiverId, channelId, content, timestamp);
+            RPC_SendMessage(senderId, receiverId, channelId, content, timestamp);
         }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_SendMessage(string id, string senderId, string receiverId, string channelId, string content, string timestamp)
+    public void RPC_SendMessage(string senderId, string receiverId, string channelId, string content, string timestamp)
     {
         // 受け取った時の処理
-        if (senderId == id || 
-        (channelId == "DM" && receiverId == id) || 
-        (receiverId == "All" && PlayFabData.CurrentRoomChannels[channelId].MemberIds.Contains(id)))
+        if (senderId == PlayFabSettings.staticPlayer.PlayFabId || 
+        (channelId == "DM" && receiverId == PlayFabSettings.staticPlayer.PlayFabId) || 
+        (receiverId == "All" && PlayFabData.CurrentRoomChannels[channelId].MemberIds.Contains(PlayFabSettings.staticPlayer.PlayFabId)))
         {
+            string key = ""; // 共有グループデータのキーとして利用
+
             var messageData = new MessageData
             {
                 SenderId = senderId,
@@ -46,36 +49,58 @@ public class ChatSender : NetworkBehaviour
                 Content = content,
                 Timestamp = timestamp
             };
-            Debug.Log("message受信" + id);
+            Debug.Log("message受信, sender: " + senderId);
 
-            if(channelId == "DM")
+            if(channelId == "DM") // DM
             {
-                string targetId = senderId == id ? receiverId : receiverId == id ? senderId : "";
-                
-                if(senderId == id)
-                {
-                    chatUIManager.UpdateChannelMessageData(id, messageData);
-                }
+                string targetId = senderId == PlayFabSettings.staticPlayer.PlayFabId ? receiverId : receiverId == PlayFabSettings.staticPlayer.PlayFabId ? senderId : "";
+                PlayFabData.DictDMScripts[targetId].messageDatas.Add(messageData); // ローカルのメッセージデータを保存
 
-                if(PlayFabData.CurrentMessageTarget == targetId)
+
+                // playfab共有データのキーを決定、key: id+id (Compare()で比較して若い方が先)    
+                int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
+                key = result == -1 ? messageData.SenderId + "+" + messageData.ReceiverId : result == 1 ? messageData.ReceiverId + "+" + messageData.SenderId : messageData.SenderId;
+
+                if((senderId == PlayFabSettings.staticPlayer.PlayFabId & PlayFabData.CurrentMessageTarget == targetId) || // 送信者が送信先のDMを開いている時
+                    (senderId != PlayFabSettings.staticPlayer.PlayFabId & PlayFabData.CurrentMessageTarget == senderId)   // 受信者が受信先のDMを開いている時
+                )
                 {
                     chatUIManager.DisplayMessage(messageData);
+                    if(!string.IsNullOrEmpty(key))
+                    {
+                        chatUIManager.DictReadMessageCount[key] = PlayFabData.DictDMScripts[targetId].messageDatas.Count; // 既読数を更新
+                    }
+                }
+                else
+                {
+                    if(senderId != PlayFabSettings.staticPlayer.PlayFabId)
+                    {
+                        PlayFabData.DictDMScripts[senderId].UnReadMessageCount++;
+                    }
                 }
             }
-            else if(receiverId == "All")
+            else if(receiverId == "All") // Channel
             {
-                if(senderId == id)
-                {
-                    chatUIManager.UpdateChannelMessageData(id, messageData);
-                }
+                key = channelId;
+                PlayFabData.DictChannelScripts[channelId].messageDatas.Add(messageData); // ローカルのメッセージデータを保存
 
                 if(PlayFabData.CurrentChannelId == channelId)
                 {
                     chatUIManager.DisplayMessage(messageData);
+                    chatUIManager.DictReadMessageCount[channelId] = PlayFabData.DictChannelScripts[messageData.ChannelId].messageDatas.Count; // 既読数を更新
                 }
+                else
+                {
+                    PlayFabData.DictChannelScripts[channelId].UnReadMessageCount++;
+                }
+            }
 
-                // apiを読んでから追加
-                // PlayFabData.DictChannelScripts[channelId].messageDatas.Add(messageData);
+            // 送信者であれば既読数とデータベースを更新
+            if(!string.IsNullOrEmpty(key) & senderId == PlayFabSettings.staticPlayer.PlayFabId)
+            {
+                chatUIManager.DictReadMessageCount[key] = PlayFabData.DictChannelScripts[key].messageDatas.Count; // 既読数を更新
+                chatUIManager.UpdateUserData(); // 既読数のデータベースを更新
+                chatUIManager.UpdateChannelMessageData(key, messageData); // メッセージデータのデータベースを更新
             }
         }
         

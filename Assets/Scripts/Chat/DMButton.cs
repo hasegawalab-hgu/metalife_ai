@@ -6,6 +6,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using UnityEditor;
 using Newtonsoft.Json;
+using TMPro;
 
 public class DMButton : MonoBehaviour
 {
@@ -17,35 +18,67 @@ public class DMButton : MonoBehaviour
     private ChatUIManager chatUIManager;
     public string beforeSendText;
 
-    private string key;
+    public int UnReadMessageCount = 0;
 
+    public string key;
+    private Image outline;
+    private Image image;
     public List<MessageData> messageDatas = new List<MessageData>();
+    private TMP_Text text;
+    private TMP_Text unReadText;
+    private Color initialColorOutline;
+    private Color initialColorText;
+    
 
     void Start()
     {
-        int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, myId);
-        if(result == 0)
-        {
-            key = myId;
-        }
-        else if(result == -1)
-        {
-            key = PlayFabSettings.staticPlayer.PlayFabId + "+" + myId;
-        }
-        else if(result == 1)
-        {
-            key = myId + "+" + PlayFabSettings.staticPlayer.PlayFabId;
-        }
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        text = GetComponentsInChildren<TMP_Text>()[0];
+        unReadText = GetComponentsInChildren<TMP_Text>()[1];
+        outline = GetComponentsInChildren<Image>()[0];
+        image = GetComponentsInChildren<Image>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
         GetSharedGroupData(true);
+        initialColorOutline = outline.color;
+        initialColorText = text.color;
+    }
+
+    void Update()
+    {
+        if(UnReadMessageCount <= 0)
+        {
+            image.gameObject.SetActive(false);
+        }
+        else
+        {
+            image.gameObject.SetActive(true);
+            unReadText.text = UnReadMessageCount.ToString();
+        }
+
+        if(playerInstance != null)
+        {
+            //outline.color = Color.green;
+            text.color = Color.green;
+        }
+        else
+        {
+            //outline.color = initialColorOutline;
+            text.color = initialColorText;
+        }
+    }
+
+    void OnDestroy()
+    {
+        GetComponent<Button>().onClick.RemoveListener(OnClickButton);
     }
 
     public void OnClickButton()
     {
+        chatUIManager.DisplayedMessageCount = 0;
+
         if(PlayFabData.CurrentChannelId == "DM")
         {
-            PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
+            PlayFabData.DictDMScripts[myId].beforeSendText = chatUIManager.inputField.text;
             chatUIManager.inputField.text = "";
         }
         else if(PlayFabData.CurrentMessageTarget == "All")
@@ -68,6 +101,20 @@ public class DMButton : MonoBehaviour
         {
             chatUIManager.DisplayMessage(messageData);
         }
+
+        chatUIManager.DictReadMessageCount[key] = messageDatas.Count;
+        UnReadMessageCount = 0;
+        UpdateUserData();
+    }
+
+    private void UpdateUserData()
+    {   
+        string jsonData = JsonConvert.SerializeObject(chatUIManager.DictReadMessageCount);
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>(){ {"DictReadMessageCount", jsonData} }
+        };
+        PlayFabClientAPI.UpdateUserData(request, _ => Debug.Log("DictReadMessageCount更新成功"), e => e.GenerateErrorReport());
     }
 
     private void GetSharedGroupData(bool calledByStart)
@@ -83,6 +130,8 @@ public class DMButton : MonoBehaviour
                 if (!string.IsNullOrEmpty(key) & result.Data.ContainsKey(key))
                 {
                     messageDatas = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[key].Value);
+                    UnReadMessageCount = messageDatas.Count - chatUIManager.DictReadMessageCount[key];
+
                     if(PlayFabData.CurrentMessageTarget == myId && calledByStart)
                     {
                         OnClickButton();

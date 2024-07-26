@@ -1,9 +1,12 @@
 using Fusion;
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SocialPlatforms;
+using ExitGames.Client.Photon.StructWrapping;
 
 public class PlayerMovement : NetworkBehaviour
 {
+    private LocalGameManager lgm;
     float _moveSpeed = 0.5f;
     float _moveAmount = 1.0f;
     bool _isMoving = false;
@@ -12,10 +15,16 @@ public class PlayerMovement : NetworkBehaviour
     public override void Spawned()
     {
         _currentDir = new Vector3(0f, _moveAmount, 0f);
+        lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
     }
 
     public override void FixedUpdateNetwork()
     {
+        if (lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
+        {
+            return;
+        }
+
         if (HasStateAuthority == false)
         {
             Debug.Log("false");
