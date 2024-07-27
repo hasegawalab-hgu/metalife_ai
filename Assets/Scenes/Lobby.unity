@@ -555,6 +555,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DisplayedMessageCount: 0
+  isDisplayedUnReadMessage: 0
   ChatUI: {fileID: 1669731570}
   spawner_channel: {fileID: 1270329162}
   button_channelTarget: {fileID: 1518776941312621175, guid: a75748816ba2a4d58ae993e9e7b66525, type: 3}
