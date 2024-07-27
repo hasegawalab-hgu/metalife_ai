@@ -75,6 +75,7 @@ public class DMButton : MonoBehaviour
     public void OnClickButton()
     {
         chatUIManager.DisplayedMessageCount = 0;
+        chatUIManager.isDisplayedUnReadMessage = false;
 
         if(PlayFabData.CurrentChannelId == "DM")
         {

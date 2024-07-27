@@ -98,7 +98,14 @@ public class ChatSender : NetworkBehaviour
             // 送信者であれば既読数とデータベースを更新
             if(!string.IsNullOrEmpty(key) & senderId == PlayFabSettings.staticPlayer.PlayFabId)
             {
-                chatUIManager.DictReadMessageCount[key] = PlayFabData.DictChannelScripts[key].messageDatas.Count; // 既読数を更新
+                if(receiverId == "All")
+                {
+                    chatUIManager.DictReadMessageCount[key] = PlayFabData.DictChannelScripts[key].messageDatas.Count; // 既読数を更新
+                }
+                else
+                {
+                    chatUIManager.DictReadMessageCount[key] = PlayFabData.DictDMScripts[receiverId].messageDatas.Count; // 既読数を更新
+                }
                 chatUIManager.UpdateUserData(); // 既読数のデータベースを更新
                 chatUIManager.UpdateChannelMessageData(key, messageData); // メッセージデータのデータベースを更新
             }
