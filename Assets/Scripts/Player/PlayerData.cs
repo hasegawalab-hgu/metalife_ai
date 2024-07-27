@@ -113,6 +113,7 @@ public class PlayerData : NetworkBehaviour
             isOnline = false;
             PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
             PlayFabData.DictChannelScripts = new Dictionary<string, ChannelButton>();
+            PlayFabData.CurrentRoomPlayersRefs = new Dictionary<string, PlayerData>();
             PlayFabData.CurrentChannelId = "general";
             Debug.Log("despauwnd" + Object);
         }

@@ -13,6 +13,7 @@ public class ChatUIManager : MonoBehaviour
     private LocalGameManager lgm;
     public Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
     public int DisplayedMessageCount = 0;
+    public bool isDisplayedUnReadMessage = false; // 「ここから未読メッセージ」を表示したかどうか
 
     // chat画面のUI
     [SerializeField]
@@ -354,9 +355,10 @@ public class ChatUIManager : MonoBehaviour
         {
             int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
             string DMScriptsKey = messageData.SenderId == PlayFabSettings.staticPlayer.PlayFabId ? messageData.ReceiverId : messageData.SenderId;
+            string readMessageKey = result == -1 ? messageData.SenderId + "+" + messageData.ReceiverId : result == 1 ? messageData.ReceiverId + "+" + messageData.SenderId : messageData.SenderId;
             messageDatas = PlayFabData.DictDMScripts[DMScriptsKey].messageDatas;
 
-            readMessageCount = PlayFabData.DictReadMessageCount[DMScriptsKey];
+            readMessageCount = PlayFabData.DictReadMessageCount[readMessageKey];
         }
         else // Channel
         {
@@ -367,12 +369,13 @@ public class ChatUIManager : MonoBehaviour
 
         // ここから未読メーセージの表示
         
-        Debug.Log(DisplayedMessageCount + " ........... " + readMessageCount);
+        // Debug.Log(DisplayedMessageCount + " ........... " + readMessageCount);
         
-        if(messageData.SenderId != PlayFabSettings.staticPlayer.PlayFabId & DisplayedMessageCount == readMessageCount)
+        if(messageData.SenderId != PlayFabSettings.staticPlayer.PlayFabId & DisplayedMessageCount == readMessageCount & isDisplayedUnReadMessage == false)
         {
             var unReadObj = Instantiate(text_UnReadPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
             unReadObj.transform.SetParent(spawner_message.transform);
+            isDisplayedUnReadMessage = true;
         }
         
 
