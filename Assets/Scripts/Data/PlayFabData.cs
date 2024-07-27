@@ -23,4 +23,16 @@ public class PlayFabData : MonoBehaviour
     public static Dictionary<string, ChannelButton> DictChannelScripts = new Dictionary<string, ChannelButton>();
 
     public static Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
+
+    public static void Initialize()
+    {
+        MyName = "";
+        MyGraduationYear = "";
+        CurrentRoomChannels = new Dictionary<string, ChannelData>();
+        CurrentRoomPlayers = new Dictionary<string, string>(); 
+        CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();
+        DictDMScripts = new Dictionary<string, DMButton>();
+        DictChannelScripts = new Dictionary<string, ChannelButton>();
+        DictReadMessageCount = new Dictionary<string, int>();
+    }
 }

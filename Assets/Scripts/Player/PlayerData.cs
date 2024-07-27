@@ -111,10 +111,7 @@ public class PlayerData : NetworkBehaviour
         if (Object.HasInputAuthority)
         {
             isOnline = false;
-            PlayFabData.DictDMScripts = new Dictionary<string, DMButton>();
-            PlayFabData.DictChannelScripts = new Dictionary<string, ChannelButton>();
-            PlayFabData.CurrentRoomPlayersRefs = new Dictionary<string, PlayerData>();
-            PlayFabData.CurrentChannelId = "general";
+            PlayFabData.Initialize();
             Debug.Log("despauwnd" + Object);
         }
     }
