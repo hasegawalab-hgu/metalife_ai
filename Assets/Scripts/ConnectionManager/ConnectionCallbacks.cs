@@ -34,19 +34,19 @@ namespace CustomConnectionHandler {
             var inputs = new MyNetworkInput();
 
             if (Input.GetKey(KeyCode.W)) {
-                inputs.Buttons.Set(MyNetworkInput.BUTTON_FORWARD, true);
+                inputs.Buttons.Set(MyNetworkInput.InputType.FORWARD, true);
             }
 
             if (Input.GetKey(KeyCode.S)) {
-                inputs.Buttons.Set(MyNetworkInput.BUTTON_BACKWARD, true);
+                inputs.Buttons.Set(MyNetworkInput.InputType.BACKWARD, true);
             }
 
             if (Input.GetKey(KeyCode.A)) {
-                inputs.Buttons.Set(MyNetworkInput.BUTTON_LEFT, true);
+                inputs.Buttons.Set(MyNetworkInput.InputType.LEFT, true);
             }
 
             if (Input.GetKey(KeyCode.D)) {
-                inputs.Buttons.Set(MyNetworkInput.BUTTON_RIGHT, true);
+                inputs.Buttons.Set(MyNetworkInput.InputType.RIGHT, true);
             }
             /*
             if (Input.GetKey(KeyCode.Space)) {
