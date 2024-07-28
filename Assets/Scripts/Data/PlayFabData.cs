@@ -9,7 +9,8 @@ public class PlayFabData : MonoBehaviour
 
     public static string MyName;
     public static string MyGraduationYear;
-    public static Texture2D MyTexture;
+    public static Texture2D MyTexture = null;
+    public static string MyTexturePath = "";
 
     public static string SharedGroupAdminId = "B909DEE6B7D0C9E2"; // 全共有グループの管理者（Lab_AdminのPlayFabId & CustomId）
     public static string CurrentChannelId = "general"; // DM: "DM"
@@ -29,6 +30,8 @@ public class PlayFabData : MonoBehaviour
     {
         MyName = "";
         MyGraduationYear = "";
+        MyTexture = null;
+        MyTexturePath = "";
         CurrentRoomChannels = new Dictionary<string, ChannelData>();
         CurrentRoomPlayers = new Dictionary<string, string>(); 
         CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();

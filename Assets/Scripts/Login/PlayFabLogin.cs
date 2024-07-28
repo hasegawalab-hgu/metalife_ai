@@ -59,6 +59,10 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         {
             PlayFabData.DictReadMessageCount = JsonConvert.DeserializeObject<Dictionary<string, int>>(result.InfoResultPayload.UserData["DictReadMessageCount"].Value);
         }
+        if(result.InfoResultPayload.UserData.ContainsKey("CharacterPath"))
+        {
+            PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
+        }
 
         /*
         if (result.InfoResultPayload.UserData["IsOnline"].Value == "True")
@@ -115,6 +119,14 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             
             PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
             PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
+            if(result.InfoResultPayload.UserData.ContainsKey("DictReadMessageCount"))
+            {
+                PlayFabData.DictReadMessageCount = JsonConvert.DeserializeObject<Dictionary<string, int>>(result.InfoResultPayload.UserData["DictReadMessageCount"].Value);
+            }
+            if(result.InfoResultPayload.UserData.ContainsKey("CharacterPath"))
+            {
+                PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
+            }
 
             Debug.Log("カスタムIDでのログイン成功 " + PlayFabData.MyName);
             

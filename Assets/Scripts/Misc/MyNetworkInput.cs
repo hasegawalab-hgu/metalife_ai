@@ -9,8 +9,9 @@ public struct MyNetworkInput : INetworkInput
         
         BACKWARD,
         LEFT,
-        FORWARD,
         RIGHT,
+        FORWARD,
+        
         ACTION1,
         NONE = -1,
 

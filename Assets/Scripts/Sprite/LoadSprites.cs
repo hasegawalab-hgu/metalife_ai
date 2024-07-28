@@ -3,38 +3,45 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using UnityEngine.UI;
-using ExitGames.Client.Photon.StructWrapping;
+using TMPro;
 
 public class LoadSprites : MonoBehaviour
 {
-    public string folderPath = "Assets/Character/pipoya_textures/現代系/"; // フォルダのパス
     public Image imagePrefab; // 表示用のImageプレハブ
     public GameObject spawner;
+    public List<string> Paths = new List<string>(){"Modern/", "Fantasy/", "Monster/", "Nekoninn/", "Animal/"};
+    public int index = 0;
+    public TMP_Text typeText; // 種類名（フォルダー名）
 
-    void Start()
+    private void DestroyChildren(Transform root)
     {
-        LoadAllImages();
+        foreach(Transform child in root.transform)
+        {
+            Destroy(child.gameObject);
+        }   
     }
 
-    void LoadAllImages()
+    public void LoadAllImages(string folderPath)
     {
+        DestroyChildren(spawner.transform);
         // フォルダ内のすべての.pngファイルを取得
-        string[] filePaths = Directory.GetFiles(folderPath, "*.png");
+        Object[] objects = Resources.LoadAll(folderPath, typeof(Texture2D));
+        typeText.text = folderPath.Substring(0, folderPath.Length - 1);
         
-        foreach (string filePath in filePaths)
+        foreach (Texture2D texture in objects)
         {
-            StartCoroutine(LoadImage(filePath));
+            StartCoroutine(LoadImage(texture));
         }
     }
 
-    IEnumerator LoadImage(string filePath)
+    private IEnumerator LoadImage(Texture2D texture)
     {
-        // ファイルをバイト配列として読み込み
-        byte[] fileData = File.ReadAllBytes(filePath);
+        // // ファイルをバイト配列として読み込み
+        // byte[] fileData = File.ReadAllBytes(filePath);
         
-        // Texture2Dにロード
-        Texture2D texture = new Texture2D(2, 2);
-        texture.LoadImage(fileData);
+        // // Texture2Dにロード
+        // Texture2D texture = new Texture2D(2, 2);
+        // texture.LoadImage(fileData);
 
         // Texture2DをSpriteに変換
         Sprite sprite = Sprite.Create(texture, new Rect(32, 96, 32, 32), new Vector2(0.5f, 0.5f));
@@ -44,7 +51,7 @@ public class LoadSprites : MonoBehaviour
         newImage.transform.SetParent(spawner.transform);
         newImage.sprite = sprite;
         newImage.GetComponent<CharacterTexture>().texture = texture;
-        newImage.transform.gameObject.name = filePath.Substring(folderPath.Length, filePath.Length - folderPath.Length - 4);
+        // newImage.transform.gameObject.name = filePath.Substring(folderPath.Length, filePath.Length - folderPath.Length - 4);
         
         yield return null;
     }
