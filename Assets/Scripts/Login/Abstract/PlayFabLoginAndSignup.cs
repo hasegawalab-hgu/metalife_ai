@@ -101,7 +101,10 @@ public class PlayFabLoginAndSignup : MonoBehaviour
     /// <param name="firstCall"></param>
     private void SetSharedGroupData(string groupId, string id, string playerName)
     {
-        PlayFabData.CurrentRoomPlayers.Add(id, playerName);
+        if(!PlayFabData.CurrentRoomPlayers.ContainsKey(id))
+        {
+            PlayFabData.CurrentRoomPlayers.Add(id, playerName);
+        }
         string jsonDataPlayers = JsonConvert.SerializeObject(PlayFabData.CurrentRoomPlayers);
 
         // playerが1人（自分のみ）の場合はgeneralを作る
