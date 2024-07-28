@@ -17,7 +17,11 @@ public class ChatUIManager : MonoBehaviour
 
     // chat画面のUI
     [SerializeField]
+    private GameObject ChatAndSettingUI;
+    [SerializeField]
     private GameObject ChatUI;
+    [SerializeField]
+    private GameObject SelectCharacterUI;
     [SerializeField]
     private GameObject spawner_channel;
     [SerializeField]
@@ -46,6 +50,8 @@ public class ChatUIManager : MonoBehaviour
     public ScrollRect scrollRect; // scrollview
     [SerializeField]
     public ContentSizeFitter csf; // contentのcontentsizefilter
+    [SerializeField]
+    public Button button_selectCharacter;
 
     // channel作成時に使用
     [SerializeField]
@@ -93,11 +99,11 @@ public class ChatUIManager : MonoBehaviour
         // UIを表示、非表示する処理
         if(lgm.LocalGameState == LocalGameManager.GameState.Playing)
         {
-            ChatUI.SetActive(false);
+            ChatAndSettingUI.SetActive(false);
         }
         else if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
-            ChatUI.SetActive(true);
+            ChatAndSettingUI.SetActive(true);
         }
     }
 
@@ -411,5 +417,22 @@ public class ChatUIManager : MonoBehaviour
     public void MoveToBottom()
     {
         scrollRect.verticalNormalizedPosition = 0f;
+    }
+
+    public void OnClickCharacterButton()
+    {
+        TMP_Text button_text = button_selectCharacter.GetComponentInChildren<TMP_Text>();
+        if(button_text.text == "Return")
+        {
+            ChatUI.SetActive(true);
+            SelectCharacterUI.SetActive(false);
+            button_text.text = "Character";
+        }
+        else
+        {
+            ChatUI.SetActive(false);
+            SelectCharacterUI.SetActive(true);
+            button_text.text = "Return";
+        }
     }
 }

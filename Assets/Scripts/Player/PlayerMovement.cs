@@ -6,6 +6,9 @@ using ExitGames.Client.Photon.StructWrapping;
 using Unity.Collections;
 using System;
 using UnityEngine.XR;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEditor.Rendering;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -18,14 +21,24 @@ public class PlayerMovement : NetworkBehaviour
     private int currentInputType {get; set;}
     [Networked]
     private float animatorSpeed {get; set;}
-    Animator animator;
+
+    private List<Sprite> sprites = new List<Sprite>();
+    private SpriteRenderer sr;
+
+    [Networked]
+    private int currentSpriteIndex {get; set;} = 1;
+
+    private int count = 0;
+    // Animator animator;
 
     public override void Spawned()
     {
-        animator = GetComponent<Animator>();
-        animator.speed = 0f;
+        //animator = GetComponent<Animator>();
+        //animator.speed = 0f;
         _currentDir = new Vector3(0f, _moveAmount, 0f);
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+        sprites = GetComponent<PlayerData>().sprites;
+        sr = GetComponent<SpriteRenderer>();
     }
 
     public override void FixedUpdateNetwork()
@@ -70,36 +83,64 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void Render()
     {
-        animator.speed = animatorSpeed;
-        animator.SetInteger("Direction", (int)currentInputType);
+        if(sprites.Count != 0)
+        {
+            sr.sprite = sprites[currentSpriteIndex];
+        }
+        //animator.speed = animatorSpeed;
+        //animator.SetInteger("Direction", (int)currentInputType);
     }
 
     private void OnMove(Vector3 dir, MyNetworkInput.InputType inputType)
     {
         currentInputType = (int)inputType;
 
+        if(sprites.Count == 0)
+        {
+            return;
+        }
+
         if (dir == _currentDir)
         {
+            count++;
             // animator.SetInteger("Direction", (int)inputType);
-            StartCoroutine(Move(dir));
+            StartCoroutine(Move(dir, inputType));
         }
         else
         {
+            count = 0;
             _currentDir = dir;
+            currentSpriteIndex = (int)inputType * 3 + 1;
         }
     }
 
-    IEnumerator Move(Vector3 dir)
+    IEnumerator Move(Vector3 dir, MyNetworkInput.InputType inputType)
     {
         Vector3 targetPos = transform.position + dir;
-
+        float seconds = 0;
         while ((targetPos - transform.position).sqrMagnitude != 0.0f)
         {
+            seconds += Time.deltaTime;
+            if(seconds > _moveSpeed * 2)
+            {
+                Debug.Log("歩行エラー");
+                break;
+            }
+
+            if(count % 2 == 0)
+            {
+                currentSpriteIndex = (int)inputType * 3;
+            }
+            else
+            {
+                currentSpriteIndex = (int)inputType * 3 + 2;
+            }
             animatorSpeed = 2f;
             _isMoving = true;
             transform.position = Vector3.MoveTowards(transform.position, targetPos, _moveSpeed);
             yield return null;
         }
+        currentSpriteIndex = (int)inputType * 3 + 1;
         animatorSpeed = 0f;
         transform.position = targetPos;
         _isMoving = false;
