@@ -1,20 +1,38 @@
-﻿using Fusion;
+﻿using System;
+using Fusion;
+using UnityEngine.UI;
 
 public struct MyNetworkInput : INetworkInput
 {
-    public const int BUTTON_FORWARD = 0;
-    public const int BUTTON_BACKWARD = 1;
-    public const int BUTTON_LEFT = 2;
-    public const int BUTTON_RIGHT = 3;
-    public const int BUTTON_ACTION1 = 4;
+    public enum InputType
+    {
+        
+        BACKWARD,
+        LEFT,
+        FORWARD,
+        RIGHT,
+        ACTION1,
+        NONE = -1,
+
+    }
     
     public NetworkButtons Buttons;
 
-    public bool IsUp(int button) {
+    public static int currentInput;
+
+    public bool IsUp(InputType button) {
+        if(Buttons .IsSet((int)button) == false) {}
+        {
+            currentInput = (int)InputType.NONE;
+        }
         return Buttons.IsSet(button) == false;
     }
 
-    public bool IsDown(int button) {
+    public bool IsDown(InputType button) {
+        if(Buttons.IsSet((int)button)) {}
+        {
+            currentInput = (int)button;
+        }
         return Buttons.IsSet(button);
     }
 }
