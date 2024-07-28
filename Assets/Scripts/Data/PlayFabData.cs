@@ -9,6 +9,7 @@ public class PlayFabData : MonoBehaviour
 
     public static string MyName;
     public static string MyGraduationYear;
+    public static Texture2D MyTexture;
 
     public static string SharedGroupAdminId = "B909DEE6B7D0C9E2"; // 全共有グループの管理者（Lab_AdminのPlayFabId & CustomId）
     public static string CurrentChannelId = "general"; // DM: "DM"
