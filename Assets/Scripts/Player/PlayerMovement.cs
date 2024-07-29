@@ -9,6 +9,7 @@ using UnityEngine.XR;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEditor.Rendering;
+using UnityEngine.Tilemaps;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -29,6 +30,8 @@ public class PlayerMovement : NetworkBehaviour
     private int currentSpriteIndex {get; set;} = 1;
 
     private int count = 0;
+
+    private Tilemap tilemap;
     // Animator animator;
 
     public override void Spawned()
@@ -39,10 +42,12 @@ public class PlayerMovement : NetworkBehaviour
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
+        tilemap = GameObject.Find("background").GetComponent<Tilemap>(); // 壁のタイルマップ
     }
 
     public override void FixedUpdateNetwork()
     {
+
         if (lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
             return;
@@ -117,6 +122,18 @@ public class PlayerMovement : NetworkBehaviour
     IEnumerator Move(Vector3 dir, MyNetworkInput.InputType inputType)
     {
         Vector3 targetPos = transform.position + dir;
+
+        if(tilemap != null)
+        {
+            var cellPos = tilemap.WorldToCell(new Vector3(targetPos.x, targetPos.y, 0));
+            if(tilemap.GetTile(cellPos) != null)
+            {
+                Debug.Log(tilemap.GetTile(cellPos));
+                _isMoving = false;
+                yield break;
+            }
+        }
+
         float seconds = 0;
         while ((targetPos - transform.position).sqrMagnitude != 0.0f)
         {
@@ -140,9 +157,15 @@ public class PlayerMovement : NetworkBehaviour
             transform.position = Vector3.MoveTowards(transform.position, targetPos, _moveSpeed);
             yield return null;
         }
+
         currentSpriteIndex = (int)inputType * 3 + 1;
         animatorSpeed = 0f;
         transform.position = targetPos;
         _isMoving = false;
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        Debug.Log("OnCollition2D: " + collision.gameObject.name);
     }
 }
