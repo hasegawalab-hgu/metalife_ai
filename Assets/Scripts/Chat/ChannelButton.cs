@@ -16,6 +16,7 @@ public class ChannelButton : MonoBehaviour
     public GameObject playerInstance;
 
     private ChatUIManager chatUIManager;
+    private LocalGameManager lgm;
     public string beforeSendText;
 
     public int UnReadMessageCount = 0;
@@ -30,6 +31,7 @@ public class ChannelButton : MonoBehaviour
     void Start()
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         unReadText = GetComponentsInChildren<TMP_Text>()[1];
         image = GetComponentsInChildren<Image>()[1];
         GetComponent<Button>().onClick.AddListener(OnClickButton);
@@ -59,6 +61,7 @@ public class ChannelButton : MonoBehaviour
         chatUIManager.DisplayedMessageCount = 0;
         chatUIManager.isDisplayedUnReadMessage = false;
 
+        /*
         if(PlayFabData.CurrentChannelId == "DM")
         {
             PlayFabData.DictDMScripts[PlayFabData.CurrentMessageTarget].beforeSendText = chatUIManager.inputField.text;
@@ -70,10 +73,11 @@ public class ChannelButton : MonoBehaviour
             chatUIManager.inputField.text = "";
         }
         
-        if(!string.IsNullOrEmpty(beforeSendText))
+        if(!string.IsNullOrEmpty(beforeSendText) & lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
             chatUIManager.inputField.text = beforeSendText;
         }
+        */
 
         if (PlayFabData.CurrentRoomChannels[channelData.ChannelId].ChannelType == "Public")
         {
@@ -93,10 +97,15 @@ public class ChannelButton : MonoBehaviour
             chatUIManager.DisplayMessage(messagedata);
             chatUIManager.scrollRect.verticalNormalizedPosition = 0f; // スクロールバーを一番下まで下げる
         }
-
-        chatUIManager.DictReadMessageCount[channelData.ChannelId] = messageDatas.Count;
-        UnReadMessageCount = 0;
-        UpdateUserData();
+        if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
+        {
+            chatUIManager.DictReadMessageCount[channelData.ChannelId] = messageDatas.Count;
+            if(UnReadMessageCount != 0)
+            {
+                UpdateUserData();
+            }
+            UnReadMessageCount = 0;
+        }
     }
 
     private void UpdateUserData()

@@ -51,6 +51,9 @@ public class ChatSender : NetworkBehaviour
             };
             Debug.Log("message受信, sender: " + senderId);
 
+            // 簡易チャットの表示
+            chatUIManager.DisplaySimpleMessage(messageData);
+
             if(channelId == "DM") // DM
             {
                 string targetId = senderId == PlayFabSettings.staticPlayer.PlayFabId ? receiverId : receiverId == PlayFabSettings.staticPlayer.PlayFabId ? senderId : "";

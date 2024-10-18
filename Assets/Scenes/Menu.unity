@@ -134,6 +134,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a85152c9c130842f199ff5b24d2fa864, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &485614254 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8658195984246628507, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
+  m_PrefabInstance: {fileID: 1272249456433459386}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d68d9ed03d7946ecbf012807b39f7d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1003,7 +1014,23 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 604994825546577471, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 604994825546577471, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 485614254}
+    - target: {fileID: 604994825546577471, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnSwitchToSignUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 604994825546577471, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PlayFabLoginAndSignup, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 604994825546577471, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 1157912310585084159, guid: f7dc9a3ec0fef431daff57cacf5bb657, type: 3}
       propertyPath: m_Name
