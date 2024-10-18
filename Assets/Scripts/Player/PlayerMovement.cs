@@ -14,6 +14,7 @@ using UnityEngine.Tilemaps;
 public class PlayerMovement : NetworkBehaviour
 {
     private LocalGameManager lgm;
+    private ChatUIManager chatUIManager;
     float _moveSpeed = 0.25f;
     float _moveAmount = 1.0f;
     bool _isMoving = false;
@@ -40,6 +41,7 @@ public class PlayerMovement : NetworkBehaviour
         //animator.speed = 0f;
         _currentDir = new Vector3(0f, _moveAmount, 0f);
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+        chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
         tilemap = GameObject.Find("background").GetComponent<Tilemap>(); // 壁のタイルマップ
@@ -100,6 +102,11 @@ public class PlayerMovement : NetworkBehaviour
     {
         currentInputType = (int)inputType;
 
+        if(chatUIManager.inputField.isFocused)
+        {
+            return;
+        }
+
         if(sprites.Count == 0)
         {
             return;
@@ -128,7 +135,6 @@ public class PlayerMovement : NetworkBehaviour
             var cellPos = tilemap.WorldToCell(new Vector3(targetPos.x, targetPos.y, 0));
             if(tilemap.GetTile(cellPos) != null)
             {
-                Debug.Log(tilemap.GetTile(cellPos));
                 _isMoving = false;
                 yield break;
             }

@@ -16,6 +16,7 @@ public class DMButton : MonoBehaviour
     public GameObject playerInstance;
 
     private ChatUIManager chatUIManager;
+    private LocalGameManager lgm;
     public string beforeSendText;
 
     public int UnReadMessageCount = 0;
@@ -33,6 +34,7 @@ public class DMButton : MonoBehaviour
     void Start()
     {
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         text = GetComponentsInChildren<TMP_Text>()[0];
         unReadText = GetComponentsInChildren<TMP_Text>()[1];
         outline = GetComponentsInChildren<Image>()[0];
@@ -77,6 +79,7 @@ public class DMButton : MonoBehaviour
         chatUIManager.DisplayedMessageCount = 0;
         chatUIManager.isDisplayedUnReadMessage = false;
 
+        /*
         if(PlayFabData.CurrentChannelId == "DM")
         {
             PlayFabData.DictDMScripts[myId].beforeSendText = chatUIManager.inputField.text;
@@ -88,11 +91,12 @@ public class DMButton : MonoBehaviour
             chatUIManager.inputField.text = "";
         }
         
-        if(!string.IsNullOrEmpty(beforeSendText))
+        if(!string.IsNullOrEmpty(beforeSendText) & lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
             chatUIManager.inputField.text = beforeSendText;
         }
-        
+        */
+
         PlayFabData.CurrentChannelId = "DM";
         PlayFabData.CurrentMessageTarget = myId;
         chatUIManager.text_channelName.text = "DM : " + myName;
@@ -103,9 +107,16 @@ public class DMButton : MonoBehaviour
             chatUIManager.DisplayMessage(messageData);
         }
 
-        chatUIManager.DictReadMessageCount[key] = messageDatas.Count;
-        UnReadMessageCount = 0;
-        UpdateUserData();
+        if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
+        {
+            chatUIManager.DictReadMessageCount[key] = messageDatas.Count;
+
+            if(UnReadMessageCount != 0)
+            {
+                UpdateUserData();
+            }
+            UnReadMessageCount = 0;
+        }
     }
 
     private void UpdateUserData()

@@ -14,6 +14,14 @@ public class LocalGameManager : MonoBehaviour
 
     public GameState LocalGameState = GameState.ChatAndSettings;
 
+    private ChatUIManager chatUIManager;
+
+    private void Start()
+    {
+        Invoke("Initialize", 0.01f);
+        chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+    }
+
     private void Update()
     {
         if(Input.GetKeyDown(KeyCode.Escape))
@@ -21,12 +29,17 @@ public class LocalGameManager : MonoBehaviour
             if(LocalGameState == GameState.Playing)
             {
                 LocalGameState = GameState.ChatAndSettings;
-                Debug.Log(LocalGameState);
+                chatUIManager.Invoke("MoveToBottom", 0.05f);
             }
             else if(LocalGameState == GameState.ChatAndSettings)
             {
                 LocalGameState = GameState.Playing;
             }
         }
+    }
+
+    void Initialize()
+    {
+        LocalGameState = GameState.Playing;
     }
 }

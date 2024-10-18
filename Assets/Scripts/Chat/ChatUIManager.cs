@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using PlayFab.ClientModels;
 using PlayFab;
 using Newtonsoft.Json;
+using UnityEngine.EventSystems;
 
 public class ChatUIManager : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class ChatUIManager : MonoBehaviour
     public Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
     public int DisplayedMessageCount = 0;
     public bool isDisplayedUnReadMessage = false; // 「ここから未読メッセージ」を表示したかどうか
+
+    public GameObject Canvas;
 
     // chat画面のUI
     [SerializeField]
@@ -35,9 +38,13 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     private Button button_submit;
     [SerializeField]
-    public GameObject spawner_message;
+    public GameObject spawner_message; // 一覧
     [SerializeField]
-    private TMP_Text text_messagePref; // prefab
+    public GameObject spawner_simple_message; // 簡易チャット
+    [SerializeField]
+    private TMP_Text text_messagePref; // prefab 一覧
+    [SerializeField]
+    private TMP_Text text_simple_messagePref; // prefab 簡易チャット
     [SerializeField]
     private TMP_Text text_senderPref; // prefab
     [SerializeField]
@@ -52,6 +59,8 @@ public class ChatUIManager : MonoBehaviour
     public ContentSizeFitter csf; // contentのcontentsizefilter
     [SerializeField]
     public Button button_selectCharacter;
+    [SerializeField]
+    public TMP_Text text_targets;
 
     // channel作成時に使用
     [SerializeField]
@@ -85,15 +94,24 @@ public class ChatUIManager : MonoBehaviour
         chatManager = GetComponent<ChatManager>();
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         csf = spawner_message.GetComponent<ContentSizeFitter>();
+        inputField.onValidateInput += ValidateInput;
         text_channelName.text = "# " + PlayFabData.CurrentRoomChannels[PlayFabData.CurrentChannelId].ChannelName; // generalなので#をつける
         DisplayChannelTargets();
         DisplayDMTargets();
+
+        Debug.Log(Screen.width + " : " + Screen.height);
     }
 
     void Update()
     {
-        
-        CheckPressEnter();
+        if(lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        {
+            if(Input.GetKeyDown(KeyCode.Tab))
+            {
+                EventSystem.current.SetSelectedGameObject(inputField.gameObject, null);
+            }
+            CheckPressEnter();
+        }
 
         //Debug.Log(LocalGameManager.LocalGameState);
         // UIを表示、非表示する処理
@@ -115,11 +133,19 @@ public class ChatUIManager : MonoBehaviour
             return;
         }
 
+        if((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && (string.IsNullOrEmpty(inputField.text) || inputField.text.Trim() == ""))
+        {
+            inputField.DeactivateInputField();
+            EventSystem.current.SetSelectedGameObject(null);
+            inputField.text = "";
+            return;
+        }
+
         // InputFieldがアクティブでEnterキーが押されたときの処理
-        if (inputField.isFocused & (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+        if (inputField.isFocused && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
         {
             // Shift + Enterの場合は新しい行を挿入、IMEがオンの時は送信しない
-            if (!Input.GetKey(KeyCode.LeftShift) & !Input.GetKey(KeyCode.RightShift))
+            if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
             {
                 OnClickSubmitButton();
             }
@@ -141,7 +167,7 @@ public class ChatUIManager : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.Return))
         {
-            OnClickSubmitButton();
+            // OnClickSubmitButton();
         }
     }
 
@@ -273,6 +299,18 @@ public class ChatUIManager : MonoBehaviour
         }
     }
 
+    private char ValidateInput(string text, int charIndex, char addedChar)
+    {
+        // エスケープキーが押されたら、その入力を無視する
+        if (addedChar == '\u001B') // '\u001B'はESCキー
+        {
+            return '\0'; // 入力無効にするため、ヌル文字を返す
+        }
+
+        // 他の入力はそのまま受け付ける
+        return addedChar;
+    }
+
     // channelType
     public void OnValueChangedChannelType(TMP_Dropdown dd)
     {
@@ -353,8 +391,6 @@ public class ChatUIManager : MonoBehaviour
 
     public void DisplayMessage(MessageData messageData)
     {
-        
-
         List<MessageData> messageDatas = new List<MessageData>();
         int readMessageCount = 0;
         if(messageData.ChannelId == "DM") // DM
@@ -410,6 +446,21 @@ public class ChatUIManager : MonoBehaviour
         Invoke("MoveToBottom", 0.05f); // contentのcsfが高さ計算をするのに時間がかかるため少し待ってから一番下にする
 
         DisplayedMessageCount++;
+    }
+
+    public void DisplaySimpleMessage(MessageData messageData)
+    {
+        var smObj = Instantiate(text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+        smObj.transform.SetParent(PlayFabData.DictSpawnerSimpleMessage[messageData.SenderId].transform);
+        smObj.text = messageData.Content;
+
+        StartCoroutine(DeleteSimpleMessage(7.0f, smObj.gameObject));
+    }
+
+    IEnumerator DeleteSimpleMessage(float delay, GameObject messageObj)
+    {
+        yield return new WaitForSeconds(delay);
+        Destroy(messageObj.gameObject);
     }
 
 

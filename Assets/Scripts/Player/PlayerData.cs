@@ -31,9 +31,21 @@ public class PlayerData : NetworkBehaviour
     public string texturePath2 {get; set;} = ""; // texturePathの続き
 
     private bool isOnline;
+
+    public List<string> Targets = new List<string>();
     
     private ChatManager chatManager;
+    private ChatUIManager chatUIManager;
     private NetworkRunner runner;
+
+    private LocalGameManager lgm;
+
+    private GameObject simpleChatView;
+    private RectTransform rt; // simpleChatViewのrecttransform
+
+    private GameObject localPlayer;
+
+    private Camera cam;
 
     
     public List<Sprite> sprites  {get; set;} = new List<Sprite>();
@@ -41,6 +53,9 @@ public class PlayerData : NetworkBehaviour
     private void Start()
     {   
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
+        chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+
         
         if(Object.HasInputAuthority)
         {
@@ -66,7 +81,7 @@ public class PlayerData : NetworkBehaviour
             chatManager.chatSender = GetComponent<ChatSender>();
 
             LoadTexture();
-            Invoke("CheckDoubleLogin", 0.1f);
+            Invoke("CheckDoubleLogin", 0.5f);
         }
         else
         {
@@ -79,9 +94,105 @@ public class PlayerData : NetworkBehaviour
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
+        localPlayer = GameObject.Find("LocalPlayer");
+        simpleChatView = Instantiate(chatUIManager.spawner_simple_message, new Vector3(0f,0f,0f), Quaternion.identity);
+        simpleChatView.transform.SetParent(chatUIManager.Canvas.transform);
+        PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId] = simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
+        rt = simpleChatView.GetComponent<RectTransform>();
+        cam = GameObject.Find("Main Camera").GetComponent<Camera>();
         //Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId]);
         Invoke("AddDictDMScripts", 1.5f);
+        Invoke("ClickDM", 1f);
     }
+
+    public void Update()
+    {
+        rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+
+        if(!Object.HasStateAuthority)
+        {
+            return;
+        }
+
+        foreach(var pr in PlayFabData.CurrentRoomPlayersRefs)
+        {
+            if(pr.Key != this.PlayFabId)
+            {
+                if(pr.Value == null)
+                {
+                    if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+                    {
+                        Targets.Remove(pr.Key);
+                        ClickDM();
+                        if(Targets.Count == 0)
+                        {
+                            chatUIManager.inputField.gameObject.SetActive(false);
+                        }
+                    }
+                    break;
+                }
+
+                Vector3 dist = new Vector3(Mathf.Abs(pr.Value.transform.position.x - this.transform.position.x), Mathf.Abs(pr.Value.transform.position.y - this.transform.position.y), 0f);
+                if(dist.x < 3.0f & dist.y < 3.0f)
+                {
+                    if(!Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+                    {
+                        Targets.Add(pr.Key);
+                        ClickDM();
+                        chatUIManager.inputField.gameObject.SetActive(true);
+                    }
+                }
+                else
+                {
+                    if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+                    {
+                        Targets.Remove(pr.Key);
+                        ClickDM();
+                        if(Targets.Count == 0)
+                        {
+                            chatUIManager.inputField.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        if(PlayFabData.CurrentMessageTarget != this.PlayFabId & Targets.Count == 0 & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        {
+            ClickDM();
+        }
+
+        /*
+        if(isChangeDMTaget & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        {
+            Debug.Log("aaa");
+            ClickDM();
+            isChangeDMTaget = false;
+        }
+        */
+    }
+
+    public void ClickDM()
+    {
+        if(Targets.Count > 0)
+        {
+            // string t = "";
+            if(PlayFabData.DictDMScripts.ContainsKey(Targets[0]))
+            {
+                PlayFabData.DictDMScripts[Targets[0]].OnClickButton();
+            }
+            chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.CurrentRoomPlayers[Targets[0]]);
+        }
+        else
+        {
+            if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
+            {
+                PlayFabData.DictDMScripts[this.PlayFabId].OnClickButton();
+            }
+            chatUIManager.text_targets.text = "";
+        }
+    }
+
 
     public void LoadTexture()
     {
@@ -255,6 +366,7 @@ public class PlayerData : NetworkBehaviour
     private void OnDestroy()
     {
         isOnline = false;
+        Destroy(simpleChatView.gameObject);
         // SetUserData();
     }
 
