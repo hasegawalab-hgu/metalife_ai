@@ -32,7 +32,8 @@ public class PlayerMovement : NetworkBehaviour
 
     private int count = 0;
 
-    private Tilemap tilemap;
+    private Tilemap backgroundTilemap;
+    private Tilemap touchableObjectsTilemap; // 新しく追加するタイルマップ
     // Animator animator;
 
     public override void Spawned()
@@ -44,7 +45,9 @@ public class PlayerMovement : NetworkBehaviour
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
-        tilemap = GameObject.Find("background").GetComponent<Tilemap>(); // 壁のタイルマップ
+        // "background" と "TouchableObjects" の両方のタイルマップを取得
+        backgroundTilemap = GameObject.Find("background").GetComponent<Tilemap>(); 
+        touchableObjectsTilemap = GameObject.Find("TouchableObjects").GetComponent<Tilemap>();
     }
 
     public override void FixedUpdateNetwork()
@@ -130,27 +133,24 @@ public class PlayerMovement : NetworkBehaviour
     {
         Vector3 targetPos = transform.position + dir;
 
-        if(tilemap != null)
+        // 2つのタイルマップを順番に確認する
+        if (CheckCollisionWithTilemaps(targetPos))
         {
-            var cellPos = tilemap.WorldToCell(new Vector3(targetPos.x, targetPos.y, 0));
-            if(tilemap.GetTile(cellPos) != null)
-            {
-                _isMoving = false;
-                yield break;
-            }
+            _isMoving = false; // 移動を中止
+            yield break;       // コルーチンを終了
         }
 
         float seconds = 0;
         while ((targetPos - transform.position).sqrMagnitude != 0.0f)
         {
             seconds += Time.deltaTime;
-            if(seconds > _moveSpeed * 2)
+            if (seconds > _moveSpeed * 2)
             {
                 Debug.Log("歩行エラー");
                 break;
             }
 
-            if(count % 2 == 0)
+            if (count % 2 == 0)
             {
                 currentSpriteIndex = (int)inputType * 3;
             }
@@ -168,6 +168,32 @@ public class PlayerMovement : NetworkBehaviour
         animatorSpeed = 0f;
         transform.position = targetPos;
         _isMoving = false;
+    }
+
+    // タイルマップでの衝突を確認するメソッド
+    private bool CheckCollisionWithTilemaps(Vector3 targetPos)
+    {
+        // プレイヤーの目的座標をタイルマップのセル座標に変換
+        Vector3Int cellPos = backgroundTilemap.WorldToCell(new Vector3(targetPos.x, targetPos.y, 0));
+
+        // 背景タイルマップの衝突判定
+        var backgroundTile = backgroundTilemap.GetTile<Tile>(cellPos);
+        if (backgroundTile != null) // ここで "background"の名前を確認
+        {
+            Debug.Log("背景タイルマップに衝突: " + backgroundTile.name);
+            return true;
+        }
+
+        // タッチ可能オブジェクトタイルマップの衝突判定
+        var touchableTile = touchableObjectsTilemap.GetTile<Tile>(cellPos);
+        if (touchableTile != null) // ここで "TouchableObjects" の名前を確認
+        {
+            Debug.Log("タッチ可能オブジェクトに衝突: " + touchableTile.name);
+            return true;
+        }
+
+        // どちらのタイルマップにも衝突していない場合
+        return false;
     }
 
     void OnCollisionEnter2D(Collision2D collision)
