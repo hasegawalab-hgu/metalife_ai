@@ -29,6 +29,12 @@ public class PlayerData : NetworkBehaviour
     public string texturePath {get; set;} = ""; // 16文字しか入らないので注意
     [Networked]
     public string texturePath2 {get; set;} = ""; // texturePathの続き
+    [Networked]
+    public bool IsInputting { get; set;} = false;
+
+    private bool isInputting = false;
+
+    private TMP_Text inputtingText;
 
     private bool isOnline;
 
@@ -85,8 +91,6 @@ public class PlayerData : NetworkBehaviour
         }
         else
         {
-            Debug.Log(texturePath);
-
             PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
             Debug.Log("start" + DisplayName);
             
@@ -109,9 +113,45 @@ public class PlayerData : NetworkBehaviour
     {
         rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
 
+        if(IsInputting != isInputting)
+        {
+            if(isInputting)
+            {
+                if(inputtingText != null)
+                {
+                    Destroy(inputtingText.transform.gameObject);
+                    inputtingText = null;
+                }
+            }
+            else
+            {
+                if(inputtingText == null)
+                {
+                    inputtingText = Instantiate(chatUIManager.text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+                    inputtingText.transform.SetParent(PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId].transform);
+                    inputtingText.GetComponent<TMP_Text>().text = "入力中...";
+                    inputtingText.color = new Color32(255, 255, 255, 180);
+                }
+            }
+
+            isInputting = IsInputting;
+        }
+        
+
+
+        /// 以降ローカルプレイヤー
         if(!Object.HasStateAuthority)
         {
             return;
+        }
+
+        if(chatUIManager.inputField.isFocused && !string.IsNullOrEmpty(chatUIManager.inputField.text))
+        {
+            IsInputting = true;
+        }
+        else
+        {
+            IsInputting = false;
         }
 
         foreach(var pr in PlayFabData.CurrentRoomPlayersRefs)

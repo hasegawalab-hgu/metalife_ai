@@ -44,7 +44,7 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     private TMP_Text text_messagePref; // prefab 一覧
     [SerializeField]
-    private TMP_Text text_simple_messagePref; // prefab 簡易チャット
+    public TMP_Text text_simple_messagePref; // prefab 簡易チャット
     [SerializeField]
     private TMP_Text text_senderPref; // prefab
     [SerializeField]
@@ -88,7 +88,7 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     private TMP_Dropdown dd_channelType;
 
-    void Start()
+    void Awake()
     {
         DictReadMessageCount = PlayFabData.DictReadMessageCount;
         chatManager = GetComponent<ChatManager>();
@@ -448,6 +448,7 @@ public class ChatUIManager : MonoBehaviour
         DisplayedMessageCount++;
     }
 
+    // 簡易チャット
     public void DisplaySimpleMessage(MessageData messageData)
     {
         var smObj = Instantiate(text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
