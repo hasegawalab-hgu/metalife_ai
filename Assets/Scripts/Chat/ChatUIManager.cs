@@ -95,11 +95,9 @@ public class ChatUIManager : MonoBehaviour
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         csf = spawner_message.GetComponent<ContentSizeFitter>();
         inputField.onValidateInput += ValidateInput;
-        text_channelName.text = "# " + PlayFabData.CurrentRoomChannels[PlayFabData.CurrentChannelId].ChannelName; // generalなので#をつける
+        text_channelName.text = "# general"; // generalなので#をつける
         DisplayChannelTargets();
         DisplayDMTargets();
-
-        Debug.Log(Screen.width + " : " + Screen.height);
     }
 
     void Update()
@@ -227,7 +225,10 @@ public class ChatUIManager : MonoBehaviour
             {
                 DictReadMessageCount.Add(script.key, 0); // 0個しか既読していないという意味(すべて未読)
             }
-            PlayFabData.DictDMScripts.Add(player.Key, script);
+            if(!PlayFabData.DictDMScripts.ContainsKey(player.Key))
+            {
+                PlayFabData.DictDMScripts.Add(player.Key, script);
+            }
         }
     }
 

@@ -45,6 +45,7 @@ public class PlayerData : NetworkBehaviour
     private NetworkRunner runner;
 
     private LocalGameManager lgm;
+    private PlayFabLogout logout;
 
     private GameObject simpleChatView;
     private RectTransform rt; // simpleChatViewのrecttransform
@@ -53,7 +54,6 @@ public class PlayerData : NetworkBehaviour
 
     private Camera cam;
 
-    
     public List<Sprite> sprites  {get; set;} = new List<Sprite>();
 
     private void Start()
@@ -61,8 +61,8 @@ public class PlayerData : NetworkBehaviour
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+        logout = GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>();
 
-        
         if(Object.HasInputAuthority)
         {
             // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
@@ -92,6 +92,7 @@ public class PlayerData : NetworkBehaviour
         else
         {
             PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
+
             Debug.Log("start" + DisplayName);
             
             Invoke("RemotePlayerTexture2Sprite", 1f);
@@ -106,7 +107,18 @@ public class PlayerData : NetworkBehaviour
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
         //Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId]);
         Invoke("AddDictDMScripts", 1.5f);
+        Invoke("ReDisplayDM", 2f);
         Invoke("ClickDM", 1f);
+    }
+
+    private void ReDisplayDM()
+    {
+        if(!PlayFabData.CurrentRoomPlayers.ContainsKey(this.PlayFabId))
+        {
+            Debug.Log("Add CurrentRoomPlayers: " + this.DisplayName);
+            PlayFabData.CurrentRoomPlayers.Add(this.PlayFabId, this.DisplayName);
+            chatUIManager.DisplayDMTargets();
+        }
     }
 
     public void Update()
@@ -163,8 +175,14 @@ public class PlayerData : NetworkBehaviour
                     if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
                     {
                         Targets.Remove(pr.Key);
-                        ClickDM();
-                        if(Targets.Count == 0)
+                        if(Targets.Count != 0)
+                        {
+                            if(PlayFabData.CurrentRoomPlayers.ContainsKey(Targets[0]))
+                            {
+                                ClickDM();
+                            }
+                        }
+                        else
                         {
                             chatUIManager.inputField.gameObject.SetActive(false);
                         }
@@ -178,7 +196,13 @@ public class PlayerData : NetworkBehaviour
                     if(!Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
                     {
                         Targets.Add(pr.Key);
-                        ClickDM();
+                        if(Targets.Count != 0)
+                        {
+                            if(PlayFabData.CurrentRoomPlayers.ContainsKey(Targets[0]))
+                            {
+                                ClickDM();
+                            }
+                        }
                         chatUIManager.inputField.gameObject.SetActive(true);
                     }
                 }
@@ -187,8 +211,14 @@ public class PlayerData : NetworkBehaviour
                     if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
                     {
                         Targets.Remove(pr.Key);
-                        ClickDM();
-                        if(Targets.Count == 0)
+                        if(Targets.Count != 0)
+                        {
+                            if(PlayFabData.CurrentRoomPlayers.ContainsKey(Targets[0]))
+                            {
+                                ClickDM();
+                            }
+                        }
+                        else
                         {
                             chatUIManager.inputField.gameObject.SetActive(false);
                         }
@@ -199,7 +229,13 @@ public class PlayerData : NetworkBehaviour
 
         if(PlayFabData.CurrentMessageTarget != this.PlayFabId & Targets.Count == 0 & lgm.LocalGameState == LocalGameManager.GameState.Playing)
         {
-            ClickDM();
+            if(Targets.Count != 0)
+            {
+                if(PlayFabData.CurrentRoomPlayers.ContainsKey(Targets[0]))
+                {
+                    ClickDM();
+                }
+            }
         }
 
         /*
@@ -349,7 +385,7 @@ public class PlayerData : NetworkBehaviour
         if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(this.PlayFabId))
         {
             Debug.LogError("このアカウントは別の端末でログインしています。");
-            GameObject.Find("Logout").GetComponent<PlayFabLogout>().OnClickLogout();
+            logout.OnClickLogout();
         }
         else
         {
