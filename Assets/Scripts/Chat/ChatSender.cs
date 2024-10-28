@@ -113,10 +113,59 @@ public class ChatSender : NetworkBehaviour
                 chatUIManager.UpdateChannelMessageData(key, messageData); // メッセージデータのデータベースを更新
             }
         }
-        
+
         // ローカルデータベースに保存する
         //receivedMessageData = messageData;
         // Debug.Log(receivedMessageData.Content);
         // メッセージ表示の処理など
+    }
+
+    // Null authorityのオブジェクトをホストに依頼して削除するメソッド
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_RequestDespawn(NetworkObject networkObject)
+    {
+        Debug.Log(networkObject.gameObject.GetComponent<PlayerData>().DisplayName);
+        if (Runner.IsServer || Runner.IsSharedModeMasterClient)
+        {
+            Runner.Despawn(networkObject);
+        }
+    }
+
+    public void TryDespawnObject(NetworkObject targetObject)
+    {
+        // このクライアントが StateAuthority でない場合、リクエストを送信
+        if (!Object.HasStateAuthority)
+        {
+            RPC_RequestDespawn(targetObject);
+        }
+        else
+        {
+            // StateAuthority を持っていれば直接 Despawn 実行
+            Runner.Despawn(targetObject);
+        }
+    }
+
+    // Null authorityのオブジェクトをホストに依頼して生成するメソッド
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_RequestSpawn(NetworkObject networkObject, Vector3 pos)
+    {
+        if (Runner.IsServer || Runner.IsSharedModeMasterClient)
+        {
+            Runner.Spawn(networkObject, pos, Quaternion.identity, inputAuthority: null);
+        }
+    }
+
+    public void TrySpawnObject(NetworkObject targetObject, Vector3 pos)
+    {
+        // このクライアントが StateAuthority でない場合、リクエストを送信
+        if (!Object.HasStateAuthority)
+        {
+            RPC_RequestSpawn(targetObject, pos);
+        }
+        else
+        {
+            // StateAuthority を持っていれば直接 spawn 実行
+            Runner.Spawn(targetObject, pos, Quaternion.identity, inputAuthority: null);
+        }
     }
 }

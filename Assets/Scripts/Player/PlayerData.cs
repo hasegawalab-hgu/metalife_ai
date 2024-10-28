@@ -7,7 +7,27 @@ using PlayFab.ClientModels;
 using TMPro;
 using Newtonsoft.Json;
 using System.Linq;
+using System;
+using Unity.Burst.CompilerServices;
 
+public class Distance : IComparable<Distance>
+{
+    public string Id;
+    public Vector3 Dist;
+
+    public Distance(string id, Vector3 dist)
+    {
+        Id = id;
+        Dist = dist;
+    }
+
+    // CompareToメソッドを実装する
+    public int CompareTo(Distance other)
+    {
+        // Distの大きさで比較する（例: 距離の長さを基準にする場合）
+        return Dist.magnitude.CompareTo(other.Dist.magnitude);
+    }
+}
 
 public class PlayerData : NetworkBehaviour
 {
@@ -36,15 +56,16 @@ public class PlayerData : NetworkBehaviour
 
     private TMP_Text inputtingText;
 
-    private bool isOnline;
+    [Networked]
+    public bool IsOnline { get; set;}
 
-    public List<string> Targets = new List<string>();
-    
+    public List<Distance> Targets = new List<Distance>();
     private ChatManager chatManager;
     private ChatUIManager chatUIManager;
     private NetworkRunner runner;
 
     private LocalGameManager lgm;
+    private PlayFabLogout logout;
 
     private GameObject simpleChatView;
     private RectTransform rt; // simpleChatViewのrecttransform
@@ -53,20 +74,33 @@ public class PlayerData : NetworkBehaviour
 
     private Camera cam;
 
-    
     public List<Sprite> sprites  {get; set;} = new List<Sprite>();
+    public PlayerSpawner ps;
+    private GameObject playerContainer;
+    private ChatSender cs;
+    const float TALKDIST = 3.0f;
+    public Material MyMat;
+
+    private void Awake()
+    {
+        playerContainer = GameObject.Find("Players");
+        transform.SetParent(playerContainer.transform);
+    }
 
     private void Start()
     {   
+        base.Spawned();
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
+        logout = GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>();
+        cs = GetComponent<ChatSender>();
+        // Invoke("a", 0.1f);
 
-        
         if(Object.HasInputAuthority)
         {
             // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
-            isOnline = true;
+            // isOnline = true;
             
             DisplayName = PlayFabData.MyName;
             GraduationYear = PlayFabData.MyGraduationYear;
@@ -83,15 +117,37 @@ public class PlayerData : NetworkBehaviour
 
             // 自分のテキストUIを設定
             TextDisplayName.SetText(DisplayName);
-            SetUserData();
+            // SetUserData();
             chatManager.chatSender = GetComponent<ChatSender>();
 
             LoadTexture();
-            Invoke("CheckDoubleLogin", 0.5f);
+            CheckDoubleLogin();
+            // Invoke("CheckDoubleLogin", 0.5f);
         }
         else
         {
+            Debug.Log("gggg" + PlayFabData.DictPlayerInfos.Count);
             PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
+            if(PlayFabData.DictPlayerInfos.ContainsKey(this.PlayFabId))
+            {
+                Debug.Log("nnnnnnnnnnnnnn" + PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath);
+                DisplayName = PlayFabData.DictPlayerInfos[this.PlayFabId].name;
+                if(PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Length < 17)
+                {
+                    texturePath = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath;
+                    texturePath2 = "";
+                }
+                else
+                {
+                    texturePath = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(0, 16);
+                    texturePath2 = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(16);
+                }
+            }
+
+            if(!PlayFabData.DictPlayerInfos.ContainsKey(this.PlayFabId))
+            {
+                RPC_ChangePlayerInfo(this.PlayFabId, this.DisplayName, this.texturePath + this.texturePath2);
+            }
             Debug.Log("start" + DisplayName);
             
             Invoke("RemotePlayerTexture2Sprite", 1f);
@@ -104,9 +160,33 @@ public class PlayerData : NetworkBehaviour
         PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId] = simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
         rt = simpleChatView.GetComponent<RectTransform>();
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+
+        ps = GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject.GetComponent<PlayerSpawner>();
+
+        MyMat = GetComponent<Renderer>().material;
+        // a();
         //Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId]);
         Invoke("AddDictDMScripts", 1.5f);
+        Invoke("ReDisplayDM", 2f);
         Invoke("ClickDM", 1f);
+    }
+
+    private void a()
+    {
+        var obj = Instantiate(chatUIManager.text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+        obj.transform.SetParent(simpleChatView.transform.GetChild(0).transform.GetChild(0).transform);
+        obj.GetComponent<TMP_Text>().text = PlayFabData.CurrentRoomPlayersRefs.Count().ToString();
+    }
+
+    
+    private void ReDisplayDM()
+    {
+        if(!PlayFabData.DictPlayerInfos.ContainsKey(this.PlayFabId))
+        {
+            Debug.Log("Add CurrentRoomPlayers: " + this.DisplayName);
+            PlayFabData.DictPlayerInfos.Add(this.PlayFabId, new PlayerInfo {id = this.PlayFabId, name = this.DisplayName, texturePath = this.texturePath + this.texturePath2});
+            chatUIManager.DisplayDMTargets();
+        }
     }
 
     public void Update()
@@ -125,25 +205,42 @@ public class PlayerData : NetworkBehaviour
             }
             else
             {
-                if(inputtingText == null)
+                if(HasInputAuthority)
                 {
-                    inputtingText = Instantiate(chatUIManager.text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
-                    inputtingText.transform.SetParent(PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId].transform);
-                    inputtingText.GetComponent<TMP_Text>().text = "入力中...";
-                    inputtingText.color = new Color32(255, 255, 255, 180);
+                    if(inputtingText == null)
+                    {
+                        inputtingText = Instantiate(chatUIManager.text_simple_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+                        inputtingText.transform.SetParent(PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId].transform);
+                        inputtingText.GetComponent<TMP_Text>().text = "入力中...";
+                        inputtingText.color = new Color32(255, 255, 255, 180);
+                    }
                 }
             }
 
             isInputting = IsInputting;
         }
-        
 
-
-        /// 以降ローカルプレイヤー
-        if(!Object.HasStateAuthority)
+        if(this.PlayFabId != PlayFabSettings.staticPlayer.PlayFabId)
         {
+            if((transform.position.x - 0.5) * 2 % 2 == 0 && (transform.position.y - 0.5) * 2 % 2 == 0)
+            {
+                Vector3 dist = new Vector3(Mathf.Abs(transform.position.x - localPlayer.transform.position.x), Mathf.Abs(transform.position.y - localPlayer.transform.position.y), 0f);
+                
+                if(!PlayFabData.DictDistance.ContainsKey(this.PlayFabId))
+                {
+                    PlayFabData.DictDistance[this.PlayFabId] = dist;
+                    return;
+                }
+
+                if(PlayFabData.DictDistance[this.PlayFabId] != dist)
+                {
+                    PlayFabData.DictDistance[this.PlayFabId] = dist;
+                }
+            }
             return;
         }
+
+        /// 以降ローカルプレイヤー
 
         if(chatUIManager.inputField.isFocused && !string.IsNullOrEmpty(chatUIManager.inputField.text))
         {
@@ -154,52 +251,116 @@ public class PlayerData : NetworkBehaviour
             IsInputting = false;
         }
 
-        foreach(var pr in PlayFabData.CurrentRoomPlayersRefs)
+        if(Targets.Count == 0 && PlayFabData.CurrentMessageTarget != this.PlayFabId)
         {
-            if(pr.Key != this.PlayFabId)
-            {
-                if(pr.Value == null)
-                {
-                    if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
-                    {
-                        Targets.Remove(pr.Key);
-                        ClickDM();
-                        if(Targets.Count == 0)
-                        {
-                            chatUIManager.inputField.gameObject.SetActive(false);
-                        }
-                    }
-                    break;
-                }
+            PlayFabData.CurrentMessageTarget = this.PlayFabId;
+            ClickDM();
+        }
 
-                Vector3 dist = new Vector3(Mathf.Abs(pr.Value.transform.position.x - this.transform.position.x), Mathf.Abs(pr.Value.transform.position.y - this.transform.position.y), 0f);
-                if(dist.x < 3.0f & dist.y < 3.0f)
+        if(Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if(Targets.Count > 1)
+            {
+                var firstElement = Targets[0];
+                for (int i = 0; i < Targets.Count - 1; i++)
                 {
-                    if(!Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
-                    {
-                        Targets.Add(pr.Key);
-                        ClickDM();
-                        chatUIManager.inputField.gameObject.SetActive(true);
-                    }
+                    Targets[i] = Targets[i + 1];
                 }
-                else
+                Targets[Targets.Count - 1] = firstElement;
+                string test = "";
+                for(int i=0; i< Targets.Count; i++)
                 {
-                    if(Targets.Contains(pr.Key) & lgm.LocalGameState == LocalGameManager.GameState.Playing)
-                    {
-                        Targets.Remove(pr.Key);
-                        ClickDM();
-                        if(Targets.Count == 0)
-                        {
-                            chatUIManager.inputField.gameObject.SetActive(false);
-                        }
-                    }
+                    test += " " + PlayFabData.DictPlayerInfos[Targets[i].Id].name;
+                }
+                Debug.Log(test);
+                if(PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                {
+                    // Debug.Log(Targets.Count + "  " + PlayFabData.DictPlayerInfos[Targets[0].Id].name);
+                    ClickDM();
                 }
             }
         }
 
-        if(PlayFabData.CurrentMessageTarget != this.PlayFabId & Targets.Count == 0 & lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        if(Input.GetKeyDown(KeyCode.DownArrow))
         {
-            ClickDM();
+            if(Targets.Count > 1)
+            {
+                var lastElement = Targets[Targets.Count - 1];
+                Targets.RemoveAt(Targets.Count - 1);
+                for (int i = Targets.Count - 1; i > 0; i--)
+                {
+                    Targets[i] = Targets[i - 1];
+                }
+                Targets[0] = lastElement;
+                string test = "";
+                for(int i=0; i< Targets.Count; i++)
+                {
+                    test += " " + PlayFabData.DictPlayerInfos[Targets[i].Id].name;
+                }
+                Debug.Log(test);
+                if(PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                {
+                    // Debug.Log(Targets.Count + "  " + PlayFabData.DictPlayerInfos[Targets[0].Id].name);
+                    ClickDM();
+                }
+            }
+        }
+
+        foreach(var pr in PlayFabData.DictDistance)
+        {
+            // Debug.Log(pr.Key + " " + pr.Value);
+            if(pr.Key != PlayFabSettings.staticPlayer.PlayFabId)
+            {
+                if(Math.Abs(pr.Value.x) <= TALKDIST && Math.Abs(pr.Value.y) <= TALKDIST)
+                {
+                    if(ContainsId(pr.Key) == null && lgm.LocalGameState == LocalGameManager.GameState.Playing)
+                    {
+                        int before = Targets.Count;
+                        Targets.Add(new Distance(pr.Key, pr.Value));
+                        ClickDM();
+                        // if(PlayFabData.DictPlayerInfos.ContainsKey(Targets[0].Id) && PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                        // {
+                        //     ClickDM();
+                        // }
+                    }
+                }
+                else
+                {
+                    Distance dist = ContainsId(pr.Key);
+                    if(dist != null)
+                    {
+                        Targets.Remove(dist);
+                    }
+                }
+            }
+
+            if(Targets.Count != 0)
+            {
+                if(PlayFabData.DictPlayerInfos.ContainsKey(Targets[0].Id) && PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                {
+                    ClickDM();
+                }
+                chatUIManager.inputField.gameObject.SetActive(true);
+            }
+            else
+            {
+                if(PlayFabData.CurrentMessageTarget != this.PlayFabId)
+                {
+                    ClickDM();
+                }
+                chatUIManager.inputField.gameObject.SetActive(false);
+            }
+        }
+
+        if(PlayFabData.CurrentMessageTarget != this.PlayFabId & Targets.Count == 0 && lgm.LocalGameState == LocalGameManager.GameState.Playing)
+        {
+            if(Targets.Count != 0)
+            {
+                if(PlayFabData.DictPlayerInfos.ContainsKey(Targets[0].Id) && PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                {
+                    ClickDM();
+                }
+            }
         }
 
         /*
@@ -216,15 +377,41 @@ public class PlayerData : NetworkBehaviour
     {
         if(Targets.Count > 0)
         {
-            // string t = "";
-            if(PlayFabData.DictDMScripts.ContainsKey(Targets[0]))
+            foreach(var player in PlayFabData.CurrentRoomPlayersRefs)
             {
-                PlayFabData.DictDMScripts[Targets[0]].OnClickButton();
+                if(ContainsId(player.Key) != null)
+                {
+                    player.Value.MyMat.SetFloat("_OutlineThickness", 0.005f);
+                    if(Targets[0].Id == player.Key)
+                    {
+                        player.Value.MyMat.SetColor("_OutlineColor", Color.red);
+                    }
+                    else
+                    {
+                        player.Value.MyMat.SetColor("_OutlineColor", Color.green);
+                    }
+                }
+                else
+                {
+                    player.Value.MyMat.SetFloat("_OutlineThickness", 0f);
+                    player.Value.MyMat.SetColor("_OutlineColor", Color.green);
+                }
             }
-            chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.CurrentRoomPlayers[Targets[0]]);
+            PlayFabData.CurrentRoomPlayersRefs[Targets[0].Id].MyMat.SetColor("_OutlineColor", Color.red);
+            // string t = "";
+            if(PlayFabData.DictDMScripts.ContainsKey(Targets[0].Id))
+            {
+                PlayFabData.DictDMScripts[Targets[0].Id].OnClickButton();
+            }
+            chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.DictPlayerInfos[Targets[0].Id].name);
         }
         else
         {
+            foreach(PlayerData player in PlayFabData.CurrentRoomPlayersRefs.Values)
+            {
+                player.MyMat.SetFloat("_OutlineThickness", 0f);
+                player.MyMat.SetColor("_OutlineColor", Color.green);
+            }
             if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
             {
                 PlayFabData.DictDMScripts[this.PlayFabId].OnClickButton();
@@ -233,20 +420,19 @@ public class PlayerData : NetworkBehaviour
         }
     }
 
-
     public void LoadTexture()
     {
         if(!string.IsNullOrEmpty(PlayFabData.MyTexturePath))
         {
             if(PlayFabData.MyTexturePath.Length < 17)
             {
-                texturePath = PlayFabData.MyTexturePath;
-                texturePath2 = "";
+                this.texturePath = PlayFabData.MyTexturePath;
+                this.texturePath2 = "";
             }
             else
             {
-                texturePath = PlayFabData.MyTexturePath.Substring(0, 16);
-                texturePath2 = PlayFabData.MyTexturePath.Substring(16);
+                this.texturePath = PlayFabData.MyTexturePath.Substring(0, 16);
+                this.texturePath2 = PlayFabData.MyTexturePath.Substring(16);
             }
 
             PlayFabData.MyTexture = Resources.Load(PlayFabData.MyTexturePath, typeof(Texture2D)) as Texture2D;
@@ -259,7 +445,7 @@ public class PlayerData : NetworkBehaviour
                 "Modern/制服1冬服_女_01", "Modern/制服1冬服_女_04", "Modern/制服1冬服_女_12", "Modern/制服1冬服_女_13", "Modern/制服1冬服_女_17", // 女子学生
                 "Modern/制服1冬服_男_01", "Modern/制服1冬服_男_04", "Modern/制服1冬服_男_06", "Modern/制服1冬服_男_10", "Modern/制服1冬服_男_12"  // 男子学生
             };
-            int rand = Random.Range(0, paths.Count);
+            int rand = UnityEngine.Random.Range(0, paths.Count);
             if(string.IsNullOrEmpty(texturePath))
             {
                 if(paths[rand].Length < 17)
@@ -349,7 +535,12 @@ public class PlayerData : NetworkBehaviour
         if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(this.PlayFabId))
         {
             Debug.LogError("このアカウントは別の端末でログインしています。");
-            GameObject.Find("Logout").GetComponent<PlayFabLogout>().OnClickLogout();
+            if(IsOnline)
+            {
+                Debug.Log("online");
+                // Runner.Despawn(PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId].gameObject.GetComponent<NetworkObject>());
+                // logout.OnClickLogout();
+            }
         }
         else
         {
@@ -393,22 +584,94 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
-        Debug.Log("despauwnd");
-        base.Despawned(runner, true);
-        if (Object.HasInputAuthority)
+        if(simpleChatView != null)
         {
-            isOnline = false;
-            PlayFabData.Initialize();
-            Debug.Log("despauwnd" + Object);
+            Destroy(simpleChatView.gameObject);
+        }
+
+        if(Runner.IsSharedModeMasterClient && GetComponent<NetworkObject>().InputAuthority != default(PlayerRef))
+        {
+            ReSpawn();
+        }
+
+        if(GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
+        {
+            // Debug.Log("aaaaa" + this.DisplayName + "  " + hasState);
+        }
+        else
+        {
+            // Debug.Log("despauwnd " + (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef)));
+            base.Despawned(runner, true);
+            if (Object.HasInputAuthority)
+            {
+                // isOnline = false;
+                PlayFabData.Initialize();
+                Debug.Log("despauwnd" + Object);
+            }
         }
     }
 
-    private void OnDestroy()
+    private void ReSpawn()
     {
-        isOnline = false;
-        Destroy(simpleChatView.gameObject);
+        Debug.Log("re");
+        GameObject players = GameObject.Find("Players");
+        GameObject tmp = null;
+        List<string> ids = new List<string>();
+        List<Vector3> positions = new List<Vector3>();
+        for (int i = 0; i < players.transform.childCount; i++)
+        {
+            GameObject target = players.transform.GetChild(i).gameObject;
+            NetworkObject networkObj = target.GetComponent<NetworkObject>();
+            PlayerData pd = target.GetComponent<PlayerData>();
+            // Debug.Log("zzzzzzz" + pd.PlayFabId);
+            if(pd.IsOnline && pd.PlayFabId != this.PlayFabId)
+            {
+                // Debug.Log(pd.PlayFabId);
+                tmp = target;
+            }
+            else
+            {
+                ids.Add(pd.PlayFabId);
+                positions.Add(pd.transform.position);
+            }
+        }
+
+        if(tmp != null)
+        {
+            GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject.GetComponent<PlayerSpawner>().SpawnAllAI(ids, positions);
+        }
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    public void RPC_ChangePlayerInfo(string id, string name, string path)
+    {
+        Debug.Log("rpc");
+        if(!PlayFabData.DictPlayerInfos.ContainsKey(id))
+        {
+            Debug.Log("");
+            PlayFabData.DictPlayerInfos[id] = new PlayerInfo{id = id, name = name, texturePath = path};
+        }
+
+        if(id == this.PlayFabId)
+        {
+            UpdatePlayerInfos();
+        }
+    }
+
+    /*
+    private IEnumerator ExecuteAfterDelay(NetworkObject Obj, Vector3 pos, float delay)
+    {
+        yield return new WaitForSeconds(delay); // 指定した時間だけ待機
+        Debug.Log("yes");
+        cs.TrySpawnObject(Obj, pos);
+    }
+
+    public override void Despawned()
+    {
+        // isOnline = false;
         // SetUserData();
     }
+    */
 
     void OnExitButtonClicked()
     {
@@ -417,7 +680,7 @@ public class PlayerData : NetworkBehaviour
 
     void OnApplicationQuit()
     {
-        isOnline = false;
+        // IsOnline = false;
         // StartCoroutine(SetUserData());
         // SetUserData();
 
@@ -427,14 +690,14 @@ public class PlayerData : NetworkBehaviour
     {
         var request = new UpdateUserDataRequest
         {
-            Data = new Dictionary<string, string>{{"IsOnline", isOnline.ToString()}, },
+            Data = new Dictionary<string, string>{{"IsOnline", IsOnline.ToString()}, },
             Permission = UserDataPermission.Public
         };
         PlayFabClientAPI.UpdateUserData(request, 
             _ => 
             {
                 Debug.Log("IsOnline変更成功");
-                if (isOnline == false)
+                if (IsOnline == false)
                 {
                     PlayFabSettings.staticPlayer.ForgetAllCredentials();
                 }
@@ -444,5 +707,33 @@ public class PlayerData : NetworkBehaviour
                 Debug.Log("IsOnline変更失敗");
             }
         );
+    }
+
+    private void UpdatePlayerInfos()
+    {
+        if (PlayFabData.DictPlayerInfos.Count == 0)
+        {
+            return;
+        }
+
+        string jsonData = JsonConvert.SerializeObject(PlayFabData.DictPlayerInfos);
+
+        var request = new UpdateSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+            Data = new Dictionary<string, string> {{"PlayerInfos", jsonData}},
+            Permission = UserDataPermission.Public
+        };
+        PlayFabClientAPI.UpdateSharedGroupData(request, 
+            result => 
+                {
+                    Debug.Log("Players更新成功");
+                },
+            e => e.GenerateErrorReport());
+    }
+
+    public Distance ContainsId(string id)
+    {
+        return Targets.Find(distance => distance.Id == id);
     }
 }

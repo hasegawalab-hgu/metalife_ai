@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using ExitGames.Client.Photon.StructWrapping;
 using Fusion;
+using Newtonsoft.Json;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
@@ -13,6 +14,7 @@ public class CharacterSelect : MonoBehaviour
     public Texture2D selectedTexture;
     public Image selectedImage;
     private ChatUIManager chatUIManager;
+    private PlayerData localPlayerData;
 
     void Start()
     {
@@ -23,17 +25,46 @@ public class CharacterSelect : MonoBehaviour
 
     public void OnClickDecideButton()
     {
+        if(localPlayerData == null)
+        {
+            localPlayerData = GameObject.Find("LocalPlayer").GetComponent<PlayerData>();
+        }
+
         PlayFabData.MyTexture = selectedTexture;
         PlayFabData.MyTexturePath = ls.Paths[ls.index] + selectedTexture.name;
-        Debug.Log(PlayFabData.MyTexturePath);
+        PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].texturePath = ls.Paths[ls.index] + selectedTexture.name;
+
         if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
         {
-            PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].LoadTexture();
-            PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].RPC_Texture2SpriteRequest();
+            localPlayerData.LoadTexture();
+            localPlayerData.RPC_Texture2SpriteRequest();
         }
-        UpdateUserData();
-
+        // UpdateUserData();
+        UpdatePlayerInfos();
         chatUIManager.OnClickCharacterButton();
+    }
+
+    private void UpdatePlayerInfos()
+    {
+        if (PlayFabData.DictPlayerInfos.Count == 0)
+        {
+            return;
+        }
+
+        string jsonData = JsonConvert.SerializeObject(PlayFabData.DictPlayerInfos);
+
+        var request = new UpdateSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+            Data = new Dictionary<string, string> {{"PlayerInfos", jsonData}},
+            Permission = UserDataPermission.Public
+        };
+        PlayFabClientAPI.UpdateSharedGroupData(request, 
+            result => 
+                {
+                    Debug.Log("Players更新成功");
+                },
+            e => e.GenerateErrorReport());
     }
 
     private void UpdateUserData()

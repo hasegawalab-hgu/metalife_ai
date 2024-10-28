@@ -180,7 +180,6 @@ public class PlayerMovement : NetworkBehaviour
         var backgroundTile = backgroundTilemap.GetTile<Tile>(cellPos);
         if (backgroundTile != null) // ここで "background"の名前を確認
         {
-            Debug.Log("背景タイルマップに衝突: " + backgroundTile.name);
             return true;
         }
 
@@ -188,7 +187,6 @@ public class PlayerMovement : NetworkBehaviour
         var touchableTile = touchableObjectsTilemap.GetTile<Tile>(cellPos);
         if (touchableTile != null) // ここで "TouchableObjects" の名前を確認
         {
-            Debug.Log("タッチ可能オブジェクトに衝突: " + touchableTile.name);
             return true;
         }
 

@@ -63,20 +63,22 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                     PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
                 }
 
-                if(result.Data.ContainsKey("Players"))
+                if(result.Data.ContainsKey("PlayerInfos"))
                 {
-                    string jsonData = result.Data["Players"].Value;
-                    PlayFabData.CurrentRoomPlayers = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonData);
+                    string jsonData = result.Data["PlayerInfos"].Value;
+                    PlayFabData.DictPlayerInfos = JsonConvert.DeserializeObject<Dictionary<string, PlayerInfo>>(jsonData);
+                    PlayFabData.MyName = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name;
+                    PlayFabData.MyTexturePath = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].texturePath;
 
-                    if(!PlayFabData.CurrentRoomPlayers.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
+                    if(!PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                     {
-                        SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                        SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName, "");
                     }
                     else
                     {
-                        if(PlayFabData.CurrentRoomPlayers[PlayFabSettings.staticPlayer.PlayFabId] != PlayFabData.MyName)
+                        if(PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name != PlayFabData.MyName)
                         {
-                            SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                            SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName, PlayFabData.MyTexturePath);
                         }
                         else
                         {
@@ -86,7 +88,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                 }
                 else
                 {
-                    SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName);
+                    SetSharedGroupData(groupId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.MyName, "");
                 }
             }
             , error => Debug.Log("get失敗: " + error.GenerateErrorReport()));
@@ -99,16 +101,16 @@ public class PlayFabLoginAndSignup : MonoBehaviour
     /// <param name="players"></param>
     /// <param name="addPlayer"></param>
     /// <param name="firstCall"></param>
-    private void SetSharedGroupData(string groupId, string id, string playerName)
+    private void SetSharedGroupData(string groupId, string id, string playerName, string texturePath)
     {
-        if(!PlayFabData.CurrentRoomPlayers.ContainsKey(id))
+        if(!PlayFabData.DictPlayerInfos.ContainsKey(id))
         {
-            PlayFabData.CurrentRoomPlayers.Add(id, playerName);
+            PlayFabData.DictPlayerInfos[id] = new PlayerInfo{id = id, name = playerName, texturePath = texturePath};
         }
-        string jsonDataPlayers = JsonConvert.SerializeObject(PlayFabData.CurrentRoomPlayers);
+        string jsonDataPlayers = JsonConvert.SerializeObject(PlayFabData.DictPlayerInfos);
 
         // playerが1人（自分のみ）の場合はgeneralを作る
-        if(PlayFabData.CurrentRoomPlayers.Count == 1 && PlayFabData.CurrentRoomChannels.Count == 0)
+        if(PlayFabData.DictPlayerInfos.Count == 1 && PlayFabData.CurrentRoomChannels.Count == 0)
         {
             ChannelData channelData = new ChannelData("general", "general", new List<string>(){ id }, "Public");
             PlayFabData.CurrentRoomChannels.Add(channelData.ChannelId, channelData);
