@@ -52,15 +52,18 @@ public class ChatSender : NetworkBehaviour
             };
             Debug.Log("message受信, sender: " + senderId);
 
-            //通知音を再生
-            ChatNotificationSound NotificationSound = FindObjectOfType<ChatNotificationSound>();
-            if (NotificationSound != null)
+            //通知音を再生(受信時のみ)
+            if (senderId != PlayFabSettings.staticPlayer.PlayFabId) //受信者の場合に音を鳴らす
             {
-                NotificationSound.PlayNotificationSound();
-            }
-            else
-            {
-                Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+                ChatNotificationSound NotificationSound = FindObjectOfType<ChatNotificationSound>();
+                if (NotificationSound != null)
+                {
+                    NotificationSound.PlayNotificationSound();
+                    }
+                    else
+                    {
+                        Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+                    }
             }
 
             // 簡易チャットの表示
