@@ -19,6 +19,7 @@ public class ChatSender : NetworkBehaviour
     {
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -50,6 +51,17 @@ public class ChatSender : NetworkBehaviour
                 Timestamp = timestamp
             };
             Debug.Log("message受信, sender: " + senderId);
+
+            //通知音を再生
+            ChatNotificationSound NotificationSound = FindObjectOfType<ChatNotificationSound>();
+            if (NotificationSound != null)
+            {
+                NotificationSound.PlayNotificationSound();
+            }
+            else
+            {
+                Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+            }
 
             // 簡易チャットの表示
             chatUIManager.DisplaySimpleMessage(messageData);
@@ -120,3 +132,4 @@ public class ChatSender : NetworkBehaviour
         // メッセージ表示の処理など
     }
 }
+
