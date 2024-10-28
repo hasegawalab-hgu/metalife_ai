@@ -87,6 +87,11 @@ public class DMButton : MonoBehaviour
 
     public void OnClickButton()
     {
+        if(chatUIManager == null)
+        {
+            return;
+        }
+        
         chatUIManager.DisplayedMessageCount = 0;
         chatUIManager.isDisplayedUnReadMessage = false;
 

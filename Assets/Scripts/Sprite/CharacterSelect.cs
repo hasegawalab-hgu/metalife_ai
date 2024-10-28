@@ -56,7 +56,7 @@ public class CharacterSelect : MonoBehaviour
         var request = new UpdateSharedGroupDataRequest
         {
             SharedGroupId = PlayFabData.CurrentSharedGroupId,
-            Data = new Dictionary<string, string> {{"PlayerInfos", jsonData}},
+            Data = new Dictionary<string, string> {{"Players", jsonData}},
             Permission = UserDataPermission.Public
         };
         PlayFabClientAPI.UpdateSharedGroupData(request, 

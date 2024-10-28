@@ -435,7 +435,14 @@ public class ChatUIManager : MonoBehaviour
         {
             var senderObj = Instantiate(text_senderPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
             senderObj.transform.SetParent(spawner_message.transform);
-            senderObj.GetComponent<TMP_Text>().text = PlayFabData.DictPlayerInfos[messageData.SenderId].name;
+            if(PlayFabData.DictPlayerInfos.ContainsKey(messageData.SenderId))
+            {
+                senderObj.GetComponent<TMP_Text>().text = PlayFabData.DictPlayerInfos[messageData.SenderId].name;
+            }
+            else
+            {
+                senderObj.GetComponent<TMP_Text>().text = "新規プレイヤー";
+            }
         }
 
         var obj = Instantiate(text_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);

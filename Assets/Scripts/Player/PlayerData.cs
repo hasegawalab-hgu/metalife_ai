@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using System;
 using Unity.Burst.CompilerServices;
+using UnityEngine.Analytics;
 
 public class Distance : IComparable<Distance>
 {
@@ -126,11 +127,9 @@ public class PlayerData : NetworkBehaviour
         }
         else
         {
-            Debug.Log("gggg" + PlayFabData.DictPlayerInfos.Count);
             PlayFabData.CurrentRoomPlayersRefs[this.PlayFabId] = this;
             if(PlayFabData.DictPlayerInfos.ContainsKey(this.PlayFabId))
             {
-                Debug.Log("nnnnnnnnnnnnnn" + PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath);
                 DisplayName = PlayFabData.DictPlayerInfos[this.PlayFabId].name;
                 if(PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Length < 17)
                 {
@@ -143,12 +142,7 @@ public class PlayerData : NetworkBehaviour
                     texturePath2 = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(16);
                 }
             }
-
-            if(!PlayFabData.DictPlayerInfos.ContainsKey(this.PlayFabId))
-            {
-                RPC_ChangePlayerInfo(this.PlayFabId, this.DisplayName, this.texturePath + this.texturePath2);
-            }
-            Debug.Log("start" + DisplayName);
+            Debug.Log("start " + DisplayName);
             
             Invoke("RemotePlayerTexture2Sprite", 1f);
             // 他ユーザーのテキストUIを設定
@@ -185,8 +179,12 @@ public class PlayerData : NetworkBehaviour
         {
             Debug.Log("Add CurrentRoomPlayers: " + this.DisplayName);
             PlayFabData.DictPlayerInfos.Add(this.PlayFabId, new PlayerInfo {id = this.PlayFabId, name = this.DisplayName, texturePath = this.texturePath + this.texturePath2});
-            chatUIManager.DisplayDMTargets();
+            if(PlayFabData.NewCreated)
+            {
+                UpdatePlayerInfos();
+            }
         }
+        chatUIManager.DisplayDMTargets();
     }
 
     public void Update()
@@ -224,6 +222,10 @@ public class PlayerData : NetworkBehaviour
         {
             if((transform.position.x - 0.5) * 2 % 2 == 0 && (transform.position.y - 0.5) * 2 % 2 == 0)
             {
+                if(localPlayer == null)
+                {
+                    return;
+                }
                 Vector3 dist = new Vector3(Mathf.Abs(transform.position.x - localPlayer.transform.position.x), Mathf.Abs(transform.position.y - localPlayer.transform.position.y), 0f);
                 
                 if(!PlayFabData.DictDistance.ContainsKey(this.PlayFabId))
@@ -273,7 +275,7 @@ public class PlayerData : NetworkBehaviour
                     test += " " + PlayFabData.DictPlayerInfos[Targets[i].Id].name;
                 }
                 Debug.Log(test);
-                if(PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                if(PlayFabData.CurrentMessageTarget != Targets[0].Id && lgm.LocalGameState == LocalGameManager.GameState.Playing)
                 {
                     // Debug.Log(Targets.Count + "  " + PlayFabData.DictPlayerInfos[Targets[0].Id].name);
                     ClickDM();
@@ -298,7 +300,7 @@ public class PlayerData : NetworkBehaviour
                     test += " " + PlayFabData.DictPlayerInfos[Targets[i].Id].name;
                 }
                 Debug.Log(test);
-                if(PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                if(PlayFabData.CurrentMessageTarget != Targets[0].Id && lgm.LocalGameState == LocalGameManager.GameState.Playing)
                 {
                     // Debug.Log(Targets.Count + "  " + PlayFabData.DictPlayerInfos[Targets[0].Id].name);
                     ClickDM();
@@ -336,7 +338,7 @@ public class PlayerData : NetworkBehaviour
 
             if(Targets.Count != 0)
             {
-                if(PlayFabData.DictPlayerInfos.ContainsKey(Targets[0].Id) && PlayFabData.CurrentMessageTarget != Targets[0].Id)
+                if(PlayFabData.DictPlayerInfos.ContainsKey(Targets[0].Id) && PlayFabData.CurrentMessageTarget != Targets[0].Id && lgm.LocalGameState == LocalGameManager.GameState.Playing)
                 {
                     ClickDM();
                 }
@@ -402,8 +404,8 @@ public class PlayerData : NetworkBehaviour
             if(PlayFabData.DictDMScripts.ContainsKey(Targets[0].Id))
             {
                 PlayFabData.DictDMScripts[Targets[0].Id].OnClickButton();
+                chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.DictPlayerInfos[Targets[0].Id].name);
             }
-            chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.DictPlayerInfos[Targets[0].Id].name);
         }
         else
         {
@@ -481,6 +483,22 @@ public class PlayerData : NetworkBehaviour
         }
         else
         {
+            List<string> paths = new List<string>()
+            {
+                "Modern/制服1冬服_女_01", "Modern/制服1冬服_女_04", "Modern/制服1冬服_女_12", "Modern/制服1冬服_女_13", "Modern/制服1冬服_女_17", // 女子学生
+                "Modern/制服1冬服_男_01", "Modern/制服1冬服_男_04", "Modern/制服1冬服_男_06", "Modern/制服1冬服_男_10", "Modern/制服1冬服_男_12"  // 男子学生
+            };
+            int rand = UnityEngine.Random.Range(0, paths.Count);
+            if(paths[rand].Length < 17)
+            {
+                texturePath = paths[rand];
+                texturePath2 = "";
+            }
+            else
+            {
+                texturePath = paths[rand].Substring(0, 16);
+                texturePath2 = paths[rand].Substring(16);
+            }
             Debug.Log("texturePath, null: " + texturePath);
             Invoke("RemotePlayerTexture2Sprite", 1f);
         }
@@ -641,8 +659,18 @@ public class PlayerData : NetworkBehaviour
             GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject.GetComponent<PlayerSpawner>().SpawnAllAI(ids, positions);
         }
     }
+    /*
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_ChangePlayerInfoRequest(string id, string name, string path)
+    {
+        if()
+        {
+            
+        }
+        RPC_ChangePlayerInfo(id, name, path);
+    }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_ChangePlayerInfo(string id, string name, string path)
     {
         Debug.Log("rpc");
@@ -658,7 +686,7 @@ public class PlayerData : NetworkBehaviour
         }
     }
 
-    /*
+    
     private IEnumerator ExecuteAfterDelay(NetworkObject Obj, Vector3 pos, float delay)
     {
         yield return new WaitForSeconds(delay); // 指定した時間だけ待機
@@ -721,7 +749,7 @@ public class PlayerData : NetworkBehaviour
         var request = new UpdateSharedGroupDataRequest
         {
             SharedGroupId = PlayFabData.CurrentSharedGroupId,
-            Data = new Dictionary<string, string> {{"PlayerInfos", jsonData}},
+            Data = new Dictionary<string, string> {{"Players", jsonData}},
             Permission = UserDataPermission.Public
         };
         PlayFabClientAPI.UpdateSharedGroupData(request, 

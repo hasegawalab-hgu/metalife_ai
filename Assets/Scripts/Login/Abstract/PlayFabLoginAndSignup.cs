@@ -63,12 +63,15 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                     PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
                 }
 
-                if(result.Data.ContainsKey("PlayerInfos"))
+                if(result.Data.ContainsKey("Players"))
                 {
-                    string jsonData = result.Data["PlayerInfos"].Value;
+                    string jsonData = result.Data["Players"].Value;
                     PlayFabData.DictPlayerInfos = JsonConvert.DeserializeObject<Dictionary<string, PlayerInfo>>(jsonData);
-                    PlayFabData.MyName = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name;
-                    PlayFabData.MyTexturePath = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].texturePath;
+                    if(PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
+                    {
+                        PlayFabData.MyName = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name;
+                        PlayFabData.MyTexturePath = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].texturePath;
+                    }
 
                     if(!PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                     {
@@ -177,6 +180,7 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                             PlayFabClientAPI.AddSharedGroupMembers(request, 
                                 _ => 
                                 {
+                                    PlayFabData.NewCreated = true;
                                     // ログイン情報を削除する
                                     PlayFabSettings.staticPlayer.ForgetAllCredentials();
                                     // ログインし直す

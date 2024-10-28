@@ -37,17 +37,38 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             else
             {
                 var players = GameObject.Find("Players");
-                for (int i = 0; i < players.transform.childCount; i++)
+                if(PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                 {
-                    if(players.transform.GetChild(i).GetComponent<PlayerData>().PlayFabId.Equals(PlayFabSettings.staticPlayer.PlayFabId))
+                    bool spawned = false;
+                    for (int i = 0; i < players.transform.childCount; i++)
                     {
-                        GameObject target = players.transform.GetChild(i).gameObject;
-                        target.GetComponent<ChatSender>().RPC_RequestDespawn(target.GetComponent<NetworkObject>());
-                        target.name = "target";
-                        Debug.Log("taget " + target.GetComponent<PlayerData>().DisplayName);
-                        SpawnLocalPlayer(target.transform.position);
-                        break;
+                        if(players.transform.GetChild(i).GetComponent<PlayerData>().PlayFabId.Equals(PlayFabSettings.staticPlayer.PlayFabId))
+                        {
+                            GameObject target = players.transform.GetChild(i).gameObject;
+                            target.GetComponent<ChatSender>().RPC_RequestDespawn(target.GetComponent<NetworkObject>());
+                            target.name = "target";
+                            Debug.Log("taget " + target.GetComponent<PlayerData>().DisplayName);
+                            SpawnLocalPlayer(target.transform.position);
+                            spawned = true;
+                            break;
+                        }
                     }
+                    if(spawned == false)
+                    {
+                        SpawnLocalPlayer(new Vector3(2.5f, -7.5f, 0));
+                    }
+                }
+                else
+                {
+                    var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(2.5f, -7.5f, 0), inputAuthority: this.Runner.LocalPlayer);
+                    PlayerData pd = localPlayer.GetComponent<PlayerData>();
+                    pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
+                    pd.IsOnline = true;
+                    localPlayer.name = "LocalPlayer";
+                    // localPlayer.transform.SetParent(GameObject.Find("Players").transform);
+                    GameObject cam = GameObject.Find("Main Camera");
+                    cam.transform.SetParent(localPlayer.transform);
+                    cam.transform.localPosition = new Vector3(0f, 0f, cam.transform.position.z);
                 }
             }
         }
@@ -108,9 +129,9 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         };
         PlayFabClientAPI.GetSharedGroupData(request, 
         result => {
-            if(result.Data.ContainsKey("PlayerInfos")) // あとで変更
+            if(result.Data.ContainsKey("Players")) // あとで変更
             {
-                string jsonData = result.Data["PlayerInfos"].Value;
+                string jsonData = result.Data["Players"].Value;
                 PlayFabData.DictPlayerInfos = JsonConvert.DeserializeObject<Dictionary<string, PlayerInfo>>(jsonData);
 
                 if(Runner.SessionInfo.PlayerCount == 1 && Runner.IsSharedModeMasterClient)
