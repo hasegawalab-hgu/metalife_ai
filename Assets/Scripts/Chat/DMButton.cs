@@ -18,6 +18,7 @@ public class DMButton : MonoBehaviour
     private ChatUIManager chatUIManager;
     private LocalGameManager lgm;
     public string beforeSendText;
+    private PlayerData pd;
 
     public int UnReadMessageCount = 0;
 
@@ -47,6 +48,27 @@ public class DMButton : MonoBehaviour
 
     void Update()
     {
+        if(pd == null)
+        {
+            if(playerInstance != null)
+            {
+                pd = playerInstance.GetComponent<PlayerData>();
+            }
+        }
+        else
+        {
+            if(pd.IsOnline)
+            {
+                //outline.color = Color.green;
+                text.color = Color.green;
+            }
+            else
+            {
+                //outline.color = initialColorOutline;
+                text.color = initialColorText;
+            }
+        }
+
         if(UnReadMessageCount <= 0)
         {
             image.gameObject.SetActive(false);
@@ -55,17 +77,6 @@ public class DMButton : MonoBehaviour
         {
             image.gameObject.SetActive(true);
             unReadText.text = UnReadMessageCount.ToString();
-        }
-
-        if(playerInstance != null)
-        {
-            //outline.color = Color.green;
-            text.color = Color.green;
-        }
-        else
-        {
-            //outline.color = initialColorOutline;
-            text.color = initialColorText;
         }
     }
 
@@ -101,7 +112,10 @@ public class DMButton : MonoBehaviour
         PlayFabData.CurrentMessageTarget = myId;
         chatUIManager.text_channelName.text = "DM : " + myName;
 
-        chatUIManager.DestroyChildren(chatUIManager.spawner_message.transform);
+        if(chatUIManager.spawner_message != null)
+        {
+            chatUIManager.DestroyChildren(chatUIManager.spawner_message.transform);
+        }
         foreach (var messageData in messageDatas)
         {
             chatUIManager.DisplayMessage(messageData);

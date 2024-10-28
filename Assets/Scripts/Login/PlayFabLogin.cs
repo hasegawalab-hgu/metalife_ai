@@ -61,7 +61,7 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         }
         if(result.InfoResultPayload.UserData.ContainsKey("CharacterPath"))
         {
-            PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
+            // PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
         }
 
         /*
@@ -116,8 +116,8 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         else
         {
             PlayFabData.MyYearLabSharedGroupId = PlayFabData.AllYearLabSharedGroupId + "_" + (int.Parse(result.InfoResultPayload.UserData["GraduationYear"].Value) - 1).ToString();
-            
-            PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
+
+            // PlayFabData.MyName = result.InfoResultPayload.UserData["DisplayName"].Value;
             PlayFabData.MyGraduationYear = result.InfoResultPayload.UserData["GraduationYear"].Value;
             if(result.InfoResultPayload.UserData.ContainsKey("DictReadMessageCount"))
             {
@@ -125,11 +125,11 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             }
             if(result.InfoResultPayload.UserData.ContainsKey("CharacterPath"))
             {
-                PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
+                // PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
             }
 
             Debug.Log("カスタムIDでのログイン成功 " + PlayFabData.MyName);
-            
+
             if (result.InfoResultPayload.UserData.ContainsKey("IsOnline"))
             {
                 /*

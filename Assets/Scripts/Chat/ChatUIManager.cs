@@ -208,15 +208,15 @@ public class ChatUIManager : MonoBehaviour
     {
         DestroyChildren(spawner_DM.transform);
 
-        foreach(var player in PlayFabData.CurrentRoomPlayers)
+        foreach(var player in PlayFabData.DictPlayerInfos.Values)
         {
             var obj = Instantiate(button_channelTarget, new Vector3(0f, 0f, 0f), Quaternion.identity);
-            obj.name = player.Value;
+            obj.name = player.name;
             obj.transform.SetParent(spawner_DM.transform);
-            obj.GetComponentInChildren<TMP_Text>().text = player.Value;
+            obj.GetComponentInChildren<TMP_Text>().text = player.name;
             DMButton script = obj.gameObject.AddComponent<DMButton>();
-            script.myId = player.Key;
-            script.myName = player.Value;
+            script.myId = player.id;
+            script.myName = player.name;
 
             int result = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, script.myId);
             script.key = result == -1 ? PlayFabSettings.staticPlayer.PlayFabId + "+" + script.myId : result == 1 ? script.myId + "+" + PlayFabSettings.staticPlayer.PlayFabId : script.myId;
@@ -225,9 +225,9 @@ public class ChatUIManager : MonoBehaviour
             {
                 DictReadMessageCount.Add(script.key, 0); // 0個しか既読していないという意味(すべて未読)
             }
-            if(!PlayFabData.DictDMScripts.ContainsKey(player.Key))
+            if(!PlayFabData.DictDMScripts.ContainsKey(player.id))
             {
-                PlayFabData.DictDMScripts.Add(player.Key, script);
+                PlayFabData.DictDMScripts.Add(player.id, script);
             }
         }
     }
@@ -273,18 +273,18 @@ public class ChatUIManager : MonoBehaviour
         panel_CHDM.SetActive(false);
         panel_createChannel.SetActive(true);
 
-        foreach(var member in PlayFabData.CurrentRoomPlayers)
+        foreach(var player in PlayFabData.DictPlayerInfos.Values)
         {
             // 自分以外表示
-            if(member.Key != PlayFabSettings.staticPlayer.PlayFabId)
+            if(player.id != PlayFabSettings.staticPlayer.PlayFabId)
             {
                 var obj = Instantiate(toggle_member, new Vector3(0f, 0f, 0f), Quaternion.identity);
-                obj.name = member.Value;
+                obj.name = player.name;
                 obj.transform.SetParent(spawner_members.transform);
                 MemberToggle script = obj.gameObject.AddComponent<MemberToggle>();
-                script.myName = member.Value;
-                script.myId = member.Key;
-                obj.GetComponentInChildren<Text>().text = member.Value;
+                script.myName = player.name;
+                script.myId = player.id;
+                obj.GetComponentInChildren<Text>().text = player.name;
 
                 addMemberToggles.Add(obj);
             }
@@ -435,7 +435,7 @@ public class ChatUIManager : MonoBehaviour
         {
             var senderObj = Instantiate(text_senderPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
             senderObj.transform.SetParent(spawner_message.transform);
-            senderObj.GetComponent<TMP_Text>().text = PlayFabData.CurrentRoomPlayers[messageData.SenderId];
+            senderObj.GetComponent<TMP_Text>().text = PlayFabData.DictPlayerInfos[messageData.SenderId].name;
         }
 
         var obj = Instantiate(text_messagePref, new Vector3(0f, 0f, 0f), Quaternion.identity);
