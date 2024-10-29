@@ -26,8 +26,9 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             {
                 var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(2.5f, -7.5f, 0), inputAuthority: this.Runner.LocalPlayer);
                 PlayerData pd = localPlayer.GetComponent<PlayerData>();
+                pd.IsHost = true;
                 pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
-                pd.IsOnline = true;
+                // pd.IsOnline = true;
                 localPlayer.name = "LocalPlayer";
                 // localPlayer.transform.SetParent(GameObject.Find("Players").transform);
                 GameObject cam = GameObject.Find("Main Camera");
@@ -63,7 +64,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                     var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(2.5f, -7.5f, 0), inputAuthority: this.Runner.LocalPlayer);
                     PlayerData pd = localPlayer.GetComponent<PlayerData>();
                     pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
-                    pd.IsOnline = true;
+                    // pd.IsOnline = true;
                     localPlayer.name = "LocalPlayer";
                     // localPlayer.transform.SetParent(GameObject.Find("Players").transform);
                     GameObject cam = GameObject.Find("Main Camera");
@@ -93,6 +94,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         // player.transform.SetParent(playerContainer.transform);
         PlayerData pd = player.GetComponent<PlayerData>();
         pd.PlayFabId = id;
+        // pd.IsOnline = false;
         pd.DisplayName = PlayFabData.DictPlayerInfos[id].name;
         string texturePath = PlayFabData.DictPlayerInfos[id].texturePath;
         if(texturePath.Length < 17)
@@ -113,7 +115,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, pos, inputAuthority: this.Runner.LocalPlayer);
         PlayerData pd = localPlayer.GetComponent<PlayerData>();
         pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
-        pd.IsOnline = true;
+        // pd.IsOnline = true;
         localPlayer.name = "LocalPlayer";
         GameObject cam = GameObject.Find("Main Camera");
         cam.transform.SetParent(localPlayer.transform);
@@ -157,7 +159,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
 
     public void SpawnAllAI(List<string> Ids, List<Vector3> pos)
     {
-        if(Ids.Count != pos.Count)
+        if(Ids.Count != pos.Count || Ids.Count == 0 || pos.Count == 0)
         {
             return;
         }

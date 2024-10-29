@@ -10,6 +10,7 @@ using System.Linq;
 using System;
 using Unity.Burst.CompilerServices;
 using UnityEngine.Analytics;
+using UnityEngine.UIElements;
 
 public class Distance : IComparable<Distance>
 {
@@ -52,6 +53,8 @@ public class PlayerData : NetworkBehaviour
     public string texturePath2 {get; set;} = ""; // texturePathの続き
     [Networked]
     public bool IsInputting { get; set;} = false;
+    [Networked]
+    public bool IsHost { get; set;} = false;
 
     private bool isInputting = false;
 
@@ -81,6 +84,7 @@ public class PlayerData : NetworkBehaviour
     private ChatSender cs;
     const float TALKDIST = 3.0f;
     public Material MyMat;
+    GameObject MainLoby;
 
     private void Awake()
     {
@@ -90,18 +94,24 @@ public class PlayerData : NetworkBehaviour
 
     private void Start()
     {   
-        base.Spawned();
+        if(this.PlayFabId != PlayFabSettings.staticPlayer.PlayFabId)
+        {
+            this.gameObject.name = this.PlayFabId;
+        }
+        playerContainer = GameObject.Find("Players");
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         logout = GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>();
         cs = GetComponent<ChatSender>();
+        MainLoby = GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject;
+        transform.SetParent(playerContainer.transform);
         // Invoke("a", 0.1f);
 
         if(Object.HasInputAuthority)
         {
             // Invoke("GetPlayerCombinedInfo", 1f); // すぐに実行すると反映されていないため1秒後に実行
-            // isOnline = true;
+            IsOnline = true;
             
             DisplayName = PlayFabData.MyName;
             GraduationYear = PlayFabData.MyGraduationYear;
@@ -189,7 +199,10 @@ public class PlayerData : NetworkBehaviour
 
     public void Update()
     {
-        rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+        if(rt != null)
+        {
+            rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+        }
 
         if(IsInputting != isInputting)
         {
@@ -399,7 +412,10 @@ public class PlayerData : NetworkBehaviour
                     player.Value.MyMat.SetColor("_OutlineColor", Color.green);
                 }
             }
-            PlayFabData.CurrentRoomPlayersRefs[Targets[0].Id].MyMat.SetColor("_OutlineColor", Color.red);
+            if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(Targets[0].Id))
+            {
+                PlayFabData.CurrentRoomPlayersRefs[Targets[0].Id].MyMat.SetColor("_OutlineColor", Color.red);
+            }
             // string t = "";
             if(PlayFabData.DictDMScripts.ContainsKey(Targets[0].Id))
             {
@@ -570,9 +586,10 @@ public class PlayerData : NetworkBehaviour
     {
         if(PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
         {
-            if(PlayFabData.DictDMScripts[this.PlayFabId].playerInstance == null)
+            if(PlayFabData.DictDMScripts[this.PlayFabId].playerInstance == null || UnityEngine.Object.ReferenceEquals(PlayFabData.DictDMScripts[this.PlayFabId].playerInstance, null)) // missingに対応
             {
                 PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
+                PlayFabData.DictDMScripts[this.PlayFabId].pd = this;
             }
         }
         else
@@ -602,46 +619,80 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
-        if(simpleChatView != null)
-        {
-            Destroy(simpleChatView.gameObject);
-        }
-
-        if(Runner.IsSharedModeMasterClient && GetComponent<NetworkObject>().InputAuthority != default(PlayerRef))
-        {
-            ReSpawn();
-        }
-
+        // if (PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
+        // {
+        //     Debug.Log("jjjjjjjjjjj");
+        //     PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = null;
+        // }
         if(GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
         {
             // Debug.Log("aaaaa" + this.DisplayName + "  " + hasState);
         }
         else
         {
-            // Debug.Log("despauwnd " + (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef)));
-            base.Despawned(runner, true);
-            if (Object.HasInputAuthority)
+            GameObject nextTarget = null;
+            for (int i = 0; i < playerContainer.transform.childCount; i++)
             {
-                // isOnline = false;
-                PlayFabData.Initialize();
-                Debug.Log("despauwnd" + Object);
+                GameObject target = playerContainer.transform.GetChild(i).gameObject;
+                NetworkObject networkObj = target.GetComponent<NetworkObject>();
+                Debug.Log(target.name);
+                // PlayerData pd = target.GetComponent<PlayerData>();
+                if(networkObj.InputAuthority != default(PlayerRef) && !target.name.Equals(this.PlayFabId))
+                {
+                    nextTarget = target;
+                    break;
+                }
             }
+
+            if(nextTarget != null)
+            {
+                if(IsHost)
+                {
+                    if(nextTarget == localPlayer)
+                    {
+                        localPlayer.GetComponent<PlayerData>().IsHost = true;
+                        localPlayer.GetComponent<PlayerData>().RPC_Respawn(this.PlayFabId, transform.position);
+                    }
+                }
+                else
+                {
+                    Debug.Log("uuuuuuuuuuuu");
+                    if(nextTarget == localPlayer)
+                    {
+                        localPlayer.GetComponent<PlayerData>().ps.SpawnAllAI(new List<string> (){this.PlayFabId}, new List<Vector3>(){transform.position});
+                    }
+                }
+            }
+            Debug.Log(nextTarget.name + " " + localPlayer.name + " " + (nextTarget == localPlayer));
+            base.Despawned(runner, true);
+        }
+        if(simpleChatView != null)
+        {
+            Destroy(simpleChatView.gameObject);
         }
     }
 
+    public void OnDestroy()
+    {
+        if(HasStateAuthority)
+        {
+            PlayFabData.Initialize();
+        }
+    }
+/*
     private void ReSpawn()
     {
         Debug.Log("re");
-        GameObject players = GameObject.Find("Players");
+        // GameObject players = GameObject.Find("Players");
         GameObject tmp = null;
         List<string> ids = new List<string>();
         List<Vector3> positions = new List<Vector3>();
-        for (int i = 0; i < players.transform.childCount; i++)
+        for (int i = 0; i < playerContainer.transform.childCount; i++)
         {
-            GameObject target = players.transform.GetChild(i).gameObject;
+            GameObject target = playerContainer.transform.GetChild(i).gameObject;
             NetworkObject networkObj = target.GetComponent<NetworkObject>();
             PlayerData pd = target.GetComponent<PlayerData>();
-            // Debug.Log("zzzzzzz" + pd.PlayFabId);
+            Debug.Log("zzzzzzz" + pd.PlayFabId);
             if(pd.IsOnline && pd.PlayFabId != this.PlayFabId)
             {
                 // Debug.Log(pd.PlayFabId);
@@ -656,37 +707,50 @@ public class PlayerData : NetworkBehaviour
 
         if(tmp != null)
         {
-            GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject.GetComponent<PlayerSpawner>().SpawnAllAI(ids, positions);
+            MainLoby.GetComponent<PlayerSpawner>().SpawnAllAI(ids, positions);
+            tmp.GetComponent<PlayerData>().IsHost = true;
         }
     }
-    /*
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_ChangePlayerInfoRequest(string id, string name, string path)
+*/
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RPC_RespawnRequest()
     {
-        if()
+        Debug.Log(this.name + "  " + IsHost);
+        Debug.Log("mmmmmmmmmmm");
+        // RPC_Respawn();
+        if(!IsHost)
         {
-            
+            Debug.Log("mmmmmmmmmmm");
+            // RPC_Respawn();
         }
-        RPC_ChangePlayerInfo(id, name, path);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void RPC_ChangePlayerInfo(string id, string name, string path)
+    // [Rpc(RpcSources.StateAuthority, RpcTargets.StateAuthority)]
+    public void RPC_Respawn(string prevHostId, Vector3 prevHostPos)
     {
-        Debug.Log("rpc");
-        if(!PlayFabData.DictPlayerInfos.ContainsKey(id))
+        Debug.Log("rpc_respawn");
+        if(HasInputAuthority && IsHost)
         {
-            Debug.Log("");
-            PlayFabData.DictPlayerInfos[id] = new PlayerInfo{id = id, name = name, texturePath = path};
-        }
-
-        if(id == this.PlayFabId)
-        {
-            UpdatePlayerInfos();
+            List<string> ids = new List<string>();
+            List<Vector3> positions = new List<Vector3>();
+            for (int i = 0; i < playerContainer.transform.childCount; i++)
+            {
+                GameObject target = playerContainer.transform.GetChild(i).gameObject;
+                NetworkObject networkObj = target.GetComponent<NetworkObject>();
+                PlayerData pd = target.GetComponent<PlayerData>();
+                if(networkObj.InputAuthority == default(PlayerRef))
+                {
+                    ids.Add(target.name);
+                    positions.Add(pd.transform.position);
+                }
+            }
+            ids.Add(prevHostId);
+            positions.Add(prevHostPos);
+            MainLoby.GetComponent<PlayerSpawner>().SpawnAllAI(ids, positions);
+            // IsHost = true;
         }
     }
-
-    
+/*
     private IEnumerator ExecuteAfterDelay(NetworkObject Obj, Vector3 pos, float delay)
     {
         yield return new WaitForSeconds(delay); // 指定した時間だけ待機

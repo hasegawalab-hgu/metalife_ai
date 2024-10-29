@@ -18,7 +18,7 @@ public class DMButton : MonoBehaviour
     private ChatUIManager chatUIManager;
     private LocalGameManager lgm;
     public string beforeSendText;
-    private PlayerData pd;
+    public PlayerData pd;
 
     public int UnReadMessageCount = 0;
 
@@ -54,18 +54,32 @@ public class DMButton : MonoBehaviour
             {
                 pd = playerInstance.GetComponent<PlayerData>();
             }
+            else
+            {
+                if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(myId))
+                {
+                    playerInstance = GameObject.Find(myId);
+                }
+            }
         }
         else
         {
             if(pd.IsOnline)
             {
+                // text.color = Color.green;
                 //outline.color = Color.green;
-                text.color = Color.green;
+                if(text.color != Color.green)
+                {
+                    text.color = Color.green;
+                }
             }
             else
             {
+                if(text.color != initialColorText)
+                {
+                    text.color = initialColorText;
+                }
                 //outline.color = initialColorOutline;
-                text.color = initialColorText;
             }
         }
 
