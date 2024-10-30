@@ -401,7 +401,10 @@ public class ChatUIManager : MonoBehaviour
             string readMessageKey = result == -1 ? messageData.SenderId + "+" + messageData.ReceiverId : result == 1 ? messageData.ReceiverId + "+" + messageData.SenderId : messageData.SenderId;
             messageDatas = PlayFabData.DictDMScripts[DMScriptsKey].messageDatas;
 
-            readMessageCount = PlayFabData.DictReadMessageCount[readMessageKey];
+            if(PlayFabData.DictReadMessageCount.ContainsKey(readMessageKey))
+            {
+                readMessageCount = PlayFabData.DictReadMessageCount[readMessageKey];
+            }
         }
         else // Channel
         {
