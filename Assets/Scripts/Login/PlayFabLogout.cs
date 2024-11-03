@@ -17,6 +17,7 @@ public class PlayFabLogout : MonoBehaviour
     public void OnClickLogout()
     {
         PlayFabData.Islogouted = true;
+        PlayFabData.Initialize();
         mainLobby.transform.parent = null; // DontDestroyOnLoadから抜ける
         SceneManager.MoveGameObjectToScene(mainLobby, SceneManager.GetActiveScene());
         SceneManager.LoadScene("Menu");

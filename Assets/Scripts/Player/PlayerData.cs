@@ -71,7 +71,7 @@ public class PlayerData : NetworkBehaviour
     private LocalGameManager lgm;
     private PlayFabLogout logout;
 
-    private GameObject simpleChatView;
+    public GameObject simpleChatView;
     private RectTransform rt; // simpleChatViewのrecttransform
 
     private GameObject localPlayer;
@@ -193,8 +193,8 @@ public class PlayerData : NetworkBehaviour
             {
                 UpdatePlayerInfos();
             }
+            chatUIManager.DisplayDMTargets();
         }
-        chatUIManager.DisplayDMTargets();
     }
 
     public void Update()
@@ -417,8 +417,10 @@ public class PlayerData : NetworkBehaviour
                 PlayFabData.CurrentRoomPlayersRefs[Targets[0].Id].MyMat.SetColor("_OutlineColor", Color.red);
             }
             // string t = "";
+            
             if(PlayFabData.DictDMScripts.ContainsKey(Targets[0].Id))
             {
+                Debug.Log(Targets[0].Id);
                 PlayFabData.DictDMScripts[Targets[0].Id].OnClickButton();
                 chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.DictPlayerInfos[Targets[0].Id].name);
             }
@@ -589,12 +591,20 @@ public class PlayerData : NetworkBehaviour
             if(PlayFabData.DictDMScripts[this.PlayFabId].playerInstance == null || UnityEngine.Object.ReferenceEquals(PlayFabData.DictDMScripts[this.PlayFabId].playerInstance, null)) // missingに対応
             {
                 PlayFabData.DictDMScripts[this.PlayFabId].playerInstance = this.gameObject;
-                PlayFabData.DictDMScripts[this.PlayFabId].pd = this;
+                if(PlayFabData.DictDMScripts[this.PlayFabId].pd == null)
+                {
+                    PlayFabData.DictDMScripts[this.PlayFabId].pd = this;
+                    Debug.Log("add"  + PlayFabData.DictDMScripts[this.PlayFabId].pd);
+                }
             }
         }
         else
         {
             Invoke("AddDictDMScripts", 1.0f);
+        }
+        if(HasInputAuthority)
+        {
+            Debug.Log(PlayFabData.DictDMScripts[this.PlayFabId].pd + " "  + DisplayName);
         }
     }
 
@@ -619,6 +629,10 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+        if(simpleChatView != null)
+        {
+            Destroy(simpleChatView.gameObject);
+        }
         // if (PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
         // {
         //     Debug.Log("jjjjjjjjjjj");
@@ -627,6 +641,7 @@ public class PlayerData : NetworkBehaviour
         if(GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
         {
             // Debug.Log("aaaaa" + this.DisplayName + "  " + hasState);
+            base.Despawned(runner, true);
         }
         else
         {
@@ -637,7 +652,7 @@ public class PlayerData : NetworkBehaviour
                 NetworkObject networkObj = target.GetComponent<NetworkObject>();
                 Debug.Log(target.name);
                 // PlayerData pd = target.GetComponent<PlayerData>();
-                if(networkObj.InputAuthority != default(PlayerRef) && !target.name.Equals(this.PlayFabId))
+                if(networkObj.InputAuthority != default(PlayerRef) && !target.name.Equals("LocalPlayer"))
                 {
                     nextTarget = target;
                     break;
@@ -663,20 +678,7 @@ public class PlayerData : NetworkBehaviour
                     }
                 }
             }
-            Debug.Log(nextTarget.name + " " + localPlayer.name + " " + (nextTarget == localPlayer));
             base.Despawned(runner, true);
-        }
-        if(simpleChatView != null)
-        {
-            Destroy(simpleChatView.gameObject);
-        }
-    }
-
-    public void OnDestroy()
-    {
-        if(HasStateAuthority)
-        {
-            PlayFabData.Initialize();
         }
     }
 /*

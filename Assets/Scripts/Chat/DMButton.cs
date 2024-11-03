@@ -50,6 +50,8 @@ public class DMButton : MonoBehaviour
     {
         if(pd == null)
         {
+            // Debug.Log("null");
+            /*
             if(playerInstance != null)
             {
                 pd = playerInstance.GetComponent<PlayerData>();
@@ -60,7 +62,9 @@ public class DMButton : MonoBehaviour
                 {
                     playerInstance = GameObject.Find(myId);
                 }
+                pd = playerInstance.GetComponent<PlayerData>();
             }
+            */
         }
         else
         {
@@ -105,6 +109,7 @@ public class DMButton : MonoBehaviour
         {
             return;
         }
+        //Debug.Log("onclick! " + this.myName);
         
         chatUIManager.DisplayedMessageCount = 0;
         chatUIManager.isDisplayedUnReadMessage = false;
