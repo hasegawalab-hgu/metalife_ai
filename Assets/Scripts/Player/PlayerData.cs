@@ -85,6 +85,10 @@ public class PlayerData : NetworkBehaviour
     const float TALKDIST = 3.0f;
     public Material MyMat;
     GameObject MainLoby;
+    GPTSendChat gsc;
+
+    [SerializeField]
+    public ChatGPTConnection chatGPTConnection;
 
     private void Awake()
     {
@@ -152,8 +156,10 @@ public class PlayerData : NetworkBehaviour
                     texturePath2 = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(16);
                 }
             }
-            Debug.Log("start " + DisplayName);
-            
+            string prompt = 
+                "私のユーザーIDは" + PlayFabSettings.staticPlayer.PlayFabId + "で、ユーザー名は" + PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name + "です。つまり、私の名前は" + PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name + "です。" + 
+                "今からいうことを絶対に忘れず、かつ、守ってください。\n" + GPTSendChat.Prompt;
+            chatGPTConnection = new ChatGPTConnection(GPTSendChat.OpenAIApiKey, prompt);
             Invoke("RemotePlayerTexture2Sprite", 1f);
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
@@ -629,6 +635,7 @@ public class PlayerData : NetworkBehaviour
     // プレイヤーが切断したときの処理
     public override void Despawned(NetworkRunner runner, bool hasState)
     {
+
         if(simpleChatView != null)
         {
             Destroy(simpleChatView.gameObject);
@@ -645,36 +652,37 @@ public class PlayerData : NetworkBehaviour
         }
         else
         {
-            GameObject nextTarget = null;
-            for (int i = 0; i < playerContainer.transform.childCount; i++)
+            if(!HasInputAuthority)
             {
-                GameObject target = playerContainer.transform.GetChild(i).gameObject;
-                NetworkObject networkObj = target.GetComponent<NetworkObject>();
-                Debug.Log(target.name);
-                // PlayerData pd = target.GetComponent<PlayerData>();
-                if(networkObj.InputAuthority != default(PlayerRef) && !target.name.Equals("LocalPlayer"))
+                GameObject nextTarget = null;
+                for (int i = 0; i < playerContainer.transform.childCount; i++)
                 {
-                    nextTarget = target;
-                    break;
-                }
-            }
-
-            if(nextTarget != null)
-            {
-                if(IsHost)
-                {
-                    if(nextTarget == localPlayer)
+                    GameObject target = playerContainer.transform.GetChild(i).gameObject;
+                    NetworkObject networkObj = target.GetComponent<NetworkObject>();
+                    if(networkObj.InputAuthority != default(PlayerRef) && !target.name.Equals(this.PlayFabId))
                     {
-                        localPlayer.GetComponent<PlayerData>().IsHost = true;
-                        localPlayer.GetComponent<PlayerData>().RPC_Respawn(this.PlayFabId, transform.position);
+                        nextTarget = target;
+                        break;
                     }
                 }
-                else
+
+                if(nextTarget != null)
                 {
-                    Debug.Log("uuuuuuuuuuuu");
-                    if(nextTarget == localPlayer)
+                    if(IsHost)
                     {
-                        localPlayer.GetComponent<PlayerData>().ps.SpawnAllAI(new List<string> (){this.PlayFabId}, new List<Vector3>(){transform.position});
+                        if(nextTarget == localPlayer)
+                        {
+                            localPlayer.GetComponent<PlayerData>().IsHost = true;
+                            localPlayer.GetComponent<PlayerData>().RPC_Respawn(this.PlayFabId, transform.position);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("uuuuuuuuuuuu");
+                        if(nextTarget == localPlayer)
+                        {
+                            localPlayer.GetComponent<PlayerData>().ps.SpawnAllAI(new List<string> (){this.PlayFabId}, new List<Vector3>(){transform.position});
+                        }
                     }
                 }
             }

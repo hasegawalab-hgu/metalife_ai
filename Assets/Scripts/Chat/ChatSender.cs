@@ -71,11 +71,11 @@ public class ChatSender : NetworkBehaviour
                     Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
                 }
             }
-            Debug.Log(GameObject.Find(receiverId));
+
             // chatgpt
             if(senderId == PlayFabSettings.staticPlayer.PlayFabId && GameObject.Find(receiverId).GetComponent<PlayerData>().IsOnline == false)
             {
-                gsc.SendMessageRequest(messageData.Content, GameObject.Find(receiverId).GetComponent<PlayerData>().simpleChatView.transform.GetChild(0).transform.GetChild(0).transform.gameObject);
+                gsc.SendMessageRequest(receiverId, messageData.Content, GameObject.Find(receiverId).GetComponent<PlayerData>().simpleChatView.transform.GetChild(0).transform.GetChild(0).transform.gameObject);
             }
 
             // 簡易チャットの表示

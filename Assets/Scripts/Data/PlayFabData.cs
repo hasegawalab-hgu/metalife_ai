@@ -26,6 +26,7 @@ public class PlayFabData : MonoBehaviour
     public static string AllYearLabSharedGroupId = "hasegawa_lab"; // 全年度
     public static string MyYearLabSharedGroupId; // 自分の年度
     public static string CurrentSharedGroupId; // 現在入室しているルームのグループ、今後選択する画面を作成
+    public static string CurrentAI;
     public static Dictionary<string, ChannelData> CurrentRoomChannels = new Dictionary<string, ChannelData>();
     // public static Dictionary<string, string> CurrentRoomPlayers = new Dictionary<string, string>(); // key: id, value: displayName
     public static Dictionary<string, PlayerData> CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();
@@ -37,6 +38,8 @@ public class PlayFabData : MonoBehaviour
     public static Dictionary<string, PlayerInfo> DictPlayerInfos = new Dictionary<string, PlayerInfo>();
     public static Dictionary<string, Vector3> DictDistance = new Dictionary<string, Vector3>();
 
+    public static Dictionary<string, List<MessageData>> DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
+
     public static void Initialize()
     {
         Debug.Log("initialize");
@@ -44,6 +47,7 @@ public class PlayFabData : MonoBehaviour
         MyGraduationYear = "";
         MyTexture = null;
         MyTexturePath = "";
+        CurrentAI = "";
         CurrentRoomChannels = new Dictionary<string, ChannelData>();
         // CurrentRoomPlayers = new Dictionary<string, string>(); 
         CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();
@@ -51,5 +55,6 @@ public class PlayFabData : MonoBehaviour
         DictChannelScripts = new Dictionary<string, ChannelButton>();
         DictReadMessageCount = new Dictionary<string, int>();
         DictPlayerInfos = new Dictionary<string, PlayerInfo>();
+        DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
     }
 }
