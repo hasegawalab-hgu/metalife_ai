@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Cysharp.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
-
+using Newtonsoft.Json;
 
 // OpenAI GPTとの接続を管理するクラス
 [Serializable]
@@ -14,14 +15,14 @@ public class ChatGPTConnection
     // OpenAI APIキー
     private readonly string _apiKey;
     // メッセージ履歴を保持するリスト
-    private readonly List<ChatGPTMessageModel> _messageList = new();
-    
+    public List<ChatGPTMessageModel> _messageList = new();
+
     // コンストラクタ：APIキーを設定し、初期メッセージを追加
-    public ChatGPTConnection(string apikey)
+    public ChatGPTConnection(string apikey, string prompt)
     {
         _apiKey = apikey;
         _messageList.Add(
-            new ChatGPTMessageModel() {role = "system", content = "あなたは猫です。猫語で対話をしてください。"});
+            new ChatGPTMessageModel() {role = "user", content = prompt});
     }
 
     // メッセージモデル
@@ -42,7 +43,7 @@ public class ChatGPTConnection
 
         // ユーザーメッセージをリストに追加
         _messageList.Add(new ChatGPTMessageModel {role = "user", content = userMessage});
-        
+        Debug.Log(_messageList.ToString());
         // OpenAI APIリクエストに必要なヘッダー情報
         var headers = new Dictionary<string, string>
         {
@@ -56,7 +57,8 @@ public class ChatGPTConnection
             model = "gpt-3.5-turbo",
             messages = _messageList
         };
-        var jsonOptions = JsonUtility.ToJson(options);
+        var jsonOptions = JsonConvert.SerializeObject(options);
+        Debug.Log(jsonOptions);
 
         // UnityWebRequestを使用してOpenAI GPT APIにリクエストを送信
         using var request = new UnityWebRequest(apiUrl, "POST")
@@ -64,6 +66,7 @@ public class ChatGPTConnection
             uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonOptions)),
             downloadHandler = new DownloadHandlerBuffer()
         };
+        Debug.Log(request.downloadHandler.text);
 
         // リクエストヘッダーを設定
         foreach (var header in headers)

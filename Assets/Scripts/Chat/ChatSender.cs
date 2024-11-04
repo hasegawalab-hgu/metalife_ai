@@ -12,20 +12,22 @@ using Newtonsoft.Json;
 /// </summary>
 public class ChatSender : NetworkBehaviour
 {
+    private PlayerData pd;
     private ChatManager chatManager;
     private ChatUIManager chatUIManager;
+    private GPTSendChat gsc;
 
     void Start()
     {
+        pd = GetComponent<PlayerData>();
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
-        
+        gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_SendMessageRequest(string senderId, string receiverId, string channelId, string content, string timestamp)
     {
-
         if(HasStateAuthority)
         {
             RPC_SendMessage(senderId, receiverId, channelId, content, timestamp);
@@ -35,6 +37,10 @@ public class ChatSender : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_SendMessage(string senderId, string receiverId, string channelId, string content, string timestamp)
     {
+        if(senderId == receiverId)
+        {
+            return;
+        }
         // 受け取った時の処理
         if (senderId == PlayFabSettings.staticPlayer.PlayFabId || 
         (channelId == "DM" && receiverId == PlayFabSettings.staticPlayer.PlayFabId) || 
@@ -50,7 +56,7 @@ public class ChatSender : NetworkBehaviour
                 Content = content,
                 Timestamp = timestamp
             };
-            Debug.Log("message受信, sender: " + senderId);
+            Debug.Log("message受信, sender: " + senderId + "receiver" + receiverId);
 
             //通知音を再生(受信時のみ)
             if (senderId != PlayFabSettings.staticPlayer.PlayFabId) //受信者の場合に音を鳴らす
@@ -59,11 +65,17 @@ public class ChatSender : NetworkBehaviour
                 if (NotificationSound != null)
                 {
                     NotificationSound.PlayNotificationSound();
-                    }
-                    else
-                    {
-                        Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
-                    }
+                }
+                else
+                {
+                    Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+                }
+            }
+
+            // chatgpt
+            if(senderId == PlayFabSettings.staticPlayer.PlayFabId && GameObject.Find(receiverId).GetComponent<PlayerData>().IsOnline == false)
+            {
+                gsc.SendMessageRequest(receiverId, messageData.Content, GameObject.Find(receiverId).GetComponent<PlayerData>().simpleChatView.transform.GetChild(0).transform.GetChild(0).transform.gameObject);
             }
 
             // 簡易チャットの表示

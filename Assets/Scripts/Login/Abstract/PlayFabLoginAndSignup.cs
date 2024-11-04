@@ -67,6 +67,18 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                 {
                     string jsonData = result.Data["Players"].Value;
                     PlayFabData.DictPlayerInfos = JsonConvert.DeserializeObject<Dictionary<string, PlayerInfo>>(jsonData);
+
+                    foreach (var info in PlayFabData.DictPlayerInfos)
+                    {
+                        int compareResult = string.Compare(PlayFabSettings.staticPlayer.PlayFabId, info.Key);
+                        string key = compareResult == -1 ? PlayFabSettings.staticPlayer.PlayFabId + "+" + info.Key : compareResult == 1 ? info.Key + "+" + PlayFabSettings.staticPlayer.PlayFabId : info.Key;
+                        if(result.Data.ContainsKey(key))
+                        {
+                            string json = result.Data[key].Value;
+                            PlayFabData.DictAllMessageDatas[key] = JsonConvert.DeserializeObject<List<MessageData>>(result.Data[key].Value);
+                        }
+                    }
+
                     if(PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                     {
                         PlayFabData.MyName = PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name;

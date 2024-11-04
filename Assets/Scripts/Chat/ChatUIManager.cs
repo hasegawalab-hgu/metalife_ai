@@ -11,6 +11,7 @@ using UnityEngine.EventSystems;
 public class ChatUIManager : MonoBehaviour
 {
     private ChatManager chatManager;
+    private GPTSendChat gsc;
     private LocalGameManager lgm;
     public Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
     public int DisplayedMessageCount = 0;
@@ -90,6 +91,13 @@ public class ChatUIManager : MonoBehaviour
 
     void Awake()
     {
+        gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
+        // gsc.inputField = inputField;
+        // gsc.content_obj = spawner_simple_message;
+        if(PlayFabData.DictReadMessageCount.Count != 0)
+        {
+
+        }
         DictReadMessageCount = PlayFabData.DictReadMessageCount;
         chatManager = GetComponent<ChatManager>();
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
@@ -197,7 +205,7 @@ public class ChatUIManager : MonoBehaviour
                 }
             }
 
-            if(!DictReadMessageCount.ContainsKey(value.ChannelId))
+            if(!DictReadMessageCount.ContainsKey(value.ChannelId) )
             {
                 DictReadMessageCount.Add(value.ChannelId, 0); // 0個しか既読していないという意味(すべて未読)
             }
@@ -403,6 +411,7 @@ public class ChatUIManager : MonoBehaviour
 
             if(PlayFabData.DictReadMessageCount.ContainsKey(readMessageKey))
             {
+                // Debug.Log(readMessageKey + " " + PlayFabData.DictReadMessageCount[readMessageKey]);
                 readMessageCount = PlayFabData.DictReadMessageCount[readMessageKey];
             }
         }
@@ -469,7 +478,7 @@ public class ChatUIManager : MonoBehaviour
         StartCoroutine(DeleteSimpleMessage(7.0f, smObj.gameObject));
     }
 
-    IEnumerator DeleteSimpleMessage(float delay, GameObject messageObj)
+    public IEnumerator DeleteSimpleMessage(float delay, GameObject messageObj)
     {
         yield return new WaitForSeconds(delay);
         Destroy(messageObj.gameObject);
