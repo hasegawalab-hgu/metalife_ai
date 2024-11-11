@@ -59,6 +59,24 @@ public class PlayerData : NetworkBehaviour
     public bool IsHost { get; set;} = false;
 
     private bool isInputting = false;
+    public void SetIsInputting(bool isInputting)
+    {
+        IsInputting = isInputting;
+    }
+    public bool GetInputting()
+    {
+        return IsInputting;
+    }
+
+    public void SetIsChattingDelay(bool isChatting, float delay)
+    {
+        Invoke("SetIsChatting", delay);
+    }
+
+    private void SetIsChatting(bool isChatting)
+    {
+        IsChatting = isChatting;
+    }
 
     private TMP_Text inputtingText;
 
@@ -92,6 +110,14 @@ public class PlayerData : NetworkBehaviour
 
     [SerializeField]
     public ChatGPTConnection chatGPTConnection;
+    private PlayerMovement pm;
+
+    public bool IsChatting = false;
+    public bool IsAI = false;
+
+    private float deltaTime;
+    private float interval = 20.0f;
+    public string CurrentContent = "";
 
     private void Awake()
     {
@@ -113,6 +139,8 @@ public class PlayerData : NetworkBehaviour
         cs = GetComponent<ChatSender>();
         MainLoby = GameObject.Find("ConnectionManager").transform.GetChild(0).gameObject;
         transform.SetParent(playerContainer.transform);
+        pm = GetComponent<PlayerMovement>();
+        gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
         // Invoke("a", 0.1f);
 
         if(Object.HasInputAuthority)
@@ -138,6 +166,9 @@ public class PlayerData : NetworkBehaviour
             // SetUserData();
             chatManager.chatSender = GetComponent<ChatSender>();
 
+            // stateInfo
+            PlayFabData.DictPlayerStateInfos[this.PlayFabId] = new PlayerStateInfo(this.PlayFabId, this.DisplayName, this.transform.position, pm.CurrentInputType, this.IsAI, this.IsChatting, "", this.isInputting);
+
             LoadTexture();
             CheckDoubleLogin();
             // Invoke("CheckDoubleLogin", 0.5f);
@@ -158,6 +189,10 @@ public class PlayerData : NetworkBehaviour
                     texturePath = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(0, 16);
                     texturePath2 = PlayFabData.DictPlayerInfos[this.PlayFabId].texturePath.Substring(16);
                 }
+            }
+            if (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
+            {
+                IsAI = true;
             }
             string prompt = 
                 "私のユーザーIDは" + PlayFabSettings.staticPlayer.PlayFabId + "で、ユーザー名は" + PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name + "です。つまり、私の名前は" + PlayFabData.DictPlayerInfos[PlayFabSettings.staticPlayer.PlayFabId].name + "です。" + 
@@ -208,6 +243,15 @@ public class PlayerData : NetworkBehaviour
 
     public void Update()
     {
+        if (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
+        {
+            IsAI = true;
+        }
+        else
+        {
+            IsAI = false;
+        }
+
         if(rt != null)
         {
             rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
@@ -399,6 +443,89 @@ public class PlayerData : NetworkBehaviour
     }
 
     
+
+    private void FixedUpdate()
+    {
+        deltaTime += Runner.DeltaTime;
+        if(deltaTime >= interval)
+        {
+            RPC_AddStateInfoRequest();
+            /*
+            List<PlayerStateInfo> stateInfos = new List<PlayerStateInfo>();
+            foreach (var player in PlayFabData.DictPlayerInfos)
+            {
+                stateInfos.Add(PlayFabData.DictPlayerInfos[player.Key]);
+            }
+            Debug.Log(stateInfos);
+            */
+
+            deltaTime = 0f;
+        }
+    }
+    [Rpc(RpcSources.All,RpcTargets.StateAuthority)]
+    private async void RPC_AddStateInfoRequest()
+    {
+        if (HasStateAuthority && IsHost && !string.IsNullOrEmpty(this.DisplayName))
+        {
+            foreach (var player in PlayFabData.CurrentRoomPlayersRefs)
+            {
+                player.Value.RPC_AddStateInfo();
+            }
+
+            // gpt送信
+            string prompt = 
+                "あなたは2D世界の住人です。上下左右の向きと現在の座標を持ち、移動する時は必ずその方向に方向転換した後、1マスずつ動きます。" + 
+                "あなた以外にもプレイヤーがおり、それぞれコミュニケーションをとっています。ただし、各プレイヤーは3マス以内に近づかないと会話することができません。また、他のプレイヤーの中にはAIも混じっています。" +
+                "あなたにはこれからあなた自身のidと他のプレイヤーを含めた行動の履歴が送られます。" + 
+                "具体的には各プレイヤーごとに id:プレイヤーを識別するid、name: プレイヤーの名前、 pos: プレイヤーのボジション、 dir: プレイヤーが向いている方向（下:0、 左:1、 右:2、 上:3）、 IsAI: プレイヤーがAIかどうか、 IsChatting: 発言中かどうか、 content: 発言内容、 IsInputting: これから発言する内容を入力中かどうか  という情報が与えられます。" +
+                "あなたはこれらの情報をもとに全てのAIプレイヤーの次の行動を生成してもらいます。ただし、複数のAIプレイヤーがいても一つの回答でまとめて送信してください。全てのAIプレイヤーの行動生成結果をまとめてから送信してください。まだ全員の結果を生成していないのにレスポンスを送らないでください。" +
+                "プレイヤーhogehoge1234が生成した向きが0、プレイヤーtesttest1234が生成した向きが1の場合は形式は以下の通りです。これ以外に何も答えないでください。また、適切な回答を生成できないと判断した場合は空文字を英数字一字\"\"で返してください。" +
+                "{" + 
+                "id: \"hogehoge1234\" {dir: \"0\"}," +
+                "id: \"testtest1234\" {dir: \"1\"}" + 
+                "}";
+            ChatGPTConnection chatGPTConnection = new ChatGPTConnection(apikey: GPTSendChat.OpenAIApiKey, prompt: prompt);
+            var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+            string data = JsonConvert.SerializeObject(PlayFabData.DictPlayerStateInfos, settings);
+            var response = await chatGPTConnection.RequestAsync(data);
+            // 応答があれば処理を行う
+            if (response.choices != null && response.choices.Length > 0)
+            {
+                var choice = response.choices[0];
+                Debug.Log("ChatGPT Response: " + choice.message.content);
+            }
+            else
+            {
+                Debug.Log("失敗");
+            }
+        }
+    }
+
+    // [Rpc(RpcSources.StateAuthority,RpcTargets.All)]
+    private void RPC_AddStateInfo()
+    {
+        if(!string.IsNullOrEmpty(this.DisplayName))
+        {
+            string content = "";
+            if (IsChatting)
+            {
+                GameObject contentObj = null;
+                if(!IsInputting)
+                {
+                    if(simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject.transform.childCount > 0)
+                    {
+                        contentObj = simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
+                        content = contentObj.transform.GetChild(contentObj.transform.childCount - 1).gameObject.GetComponent<TMP_Text>().text;
+                        Debug.Log("rpccccccccc " + this.DisplayName + " " + content);
+                    }
+                }
+            }
+            PlayFabData.DictPlayerStateInfos[this.PlayFabId] = new PlayerStateInfo (this.PlayFabId, this.DisplayName, this.transform.position, pm.CurrentInputType, IsAI, IsChatting, content, this.isInputting);
+        }
+    }
 
     public void ClickDM()
     {

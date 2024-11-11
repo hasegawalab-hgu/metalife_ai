@@ -72,14 +72,16 @@ public class ChatSender : NetworkBehaviour
                 }
             }
 
+            // 簡易チャットの表示
+            chatUIManager.DisplaySimpleMessage(messageData);
+            pd.IsChatting = true;
+            Invoke("IsChattingOff", 7f);
+
             // chatgpt
             if(senderId == PlayFabSettings.staticPlayer.PlayFabId && GameObject.Find(receiverId).GetComponent<PlayerData>().IsOnline == false)
             {
                 gsc.SendMessageRequest(receiverId, messageData.Content, GameObject.Find(receiverId).GetComponent<PlayerData>().simpleChatView.transform.GetChild(0).transform.GetChild(0).transform.gameObject);
             }
-
-            // 簡易チャットの表示
-            chatUIManager.DisplaySimpleMessage(messageData);
 
             if(channelId == "DM") // DM
             {
@@ -145,6 +147,11 @@ public class ChatSender : NetworkBehaviour
         //receivedMessageData = messageData;
         // Debug.Log(receivedMessageData.Content);
         // メッセージ表示の処理など
+    }
+
+    private void IsChattingOff()
+    {
+        pd.IsChatting = false;
     }
 
     // Null authorityのオブジェクトをホストに依頼して削除するメソッド

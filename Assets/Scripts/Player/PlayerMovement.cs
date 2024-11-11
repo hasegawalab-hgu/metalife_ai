@@ -16,11 +16,11 @@ public class PlayerMovement : NetworkBehaviour
     private LocalGameManager lgm;
     private ChatUIManager chatUIManager;
     float _moveSpeed = 0.25f;
-    float _moveAmount = 1.0f;
+    public float _moveAmount = 1.0f;
     bool _isMoving = false;
     Vector3 _currentDir;
     [Networked]
-    private int currentInputType {get; set;}
+    public int CurrentInputType {get; set;}
     [Networked]
     private float animatorSpeed {get; set;}
 
@@ -120,7 +120,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void OnMove(Vector3 dir, MyNetworkInput.InputType inputType)
     {
-        currentInputType = (int)inputType;
+        CurrentInputType = (int)inputType;
 
         if(chatUIManager.inputField.isFocused)
         {

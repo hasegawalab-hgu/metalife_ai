@@ -10,6 +10,30 @@ public class PlayerInfo
     public string texturePath;
 }
 
+public class PlayerStateInfo
+{
+    public string id;
+    public string name;
+    public Vector3 pos;
+    public int dir;
+    public bool isAI;
+    public bool isChatting;
+    public string content;
+    public bool isInputting;
+
+    public PlayerStateInfo(string id, string name, Vector3 pos, int dir, bool isAI, bool isChatting, string content, bool isInputting)
+    {
+        this.id = id;
+        this.name = name;
+        this.pos = pos;
+        this.dir = dir;
+        this.isAI = isAI;
+        this.isChatting = isChatting;
+        this.content = content;
+        this.isInputting = isInputting;
+    }
+}
+
 public class PlayFabData : MonoBehaviour
 {
     public static bool Islogouted = false;
@@ -37,6 +61,7 @@ public class PlayFabData : MonoBehaviour
     public static Dictionary<string, int> DictReadMessageCount = new Dictionary<string, int>();
     public static Dictionary<string, PlayerInfo> DictPlayerInfos = new Dictionary<string, PlayerInfo>();
     public static Dictionary<string, Vector3> DictDistance = new Dictionary<string, Vector3>();
+    public static Dictionary<string, PlayerStateInfo> DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
 
     public static Dictionary<string, List<MessageData>> DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
 
@@ -55,6 +80,7 @@ public class PlayFabData : MonoBehaviour
         DictChannelScripts = new Dictionary<string, ChannelButton>();
         DictReadMessageCount = new Dictionary<string, int>();
         DictPlayerInfos = new Dictionary<string, PlayerInfo>();
+        DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
         DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -6,12 +7,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using PlayFab;
 using Newtonsoft.Json;
+using UnityEditor;
 
 public class GPTSendChat : MonoBehaviour
 {
     private ChatUIManager chatUIManager;
     // OpenAI APIキー
-    public const string OpenAIApiKey = "";
+    public static string OpenAIApiKey { get; private set; } = "";
     
     // 一行目はpalyerDataが加える
     public const string Prompt = 
@@ -33,8 +35,28 @@ public class GPTSendChat : MonoBehaviour
     private ChatGPTConnection CurrentChatGPTConnection;
     // public string message {get;} = "";
 
-    void Start()
+    void Awake()
     {
+        string filePath = ".env";
+        if (!File.Exists(filePath))
+        {
+            Debug.LogWarning($".env file not found at {filePath}");
+            return;
+        }
+        foreach (var line in File.ReadAllLines(filePath))
+        {
+            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("#"))
+                continue;
+
+            var parts = line.Split('=', 2);
+            if (parts.Length != 2)
+                continue;
+
+            var key = parts[0].Trim();
+            var value = parts[1].Trim();
+            Environment.SetEnvironmentVariable(key, value);
+        }
+        OpenAIApiKey = Environment.GetEnvironmentVariable("GATHER_LAB_GPT_KEY");
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
     }
 
@@ -61,15 +83,18 @@ public class GPTSendChat : MonoBehaviour
             string messageHistory = JsonConvert.SerializeObject(PlayFabData.DictAllMessageDatas[key]);
             Debug.Log(messageHistory);
             CurrentChatGPTConnection._messageList.Add(
-                new ChatGPTConnection.ChatGPTMessageModel() {role = "user", content = messageHistory + "\nあなたのユーザーIDは " + receiverId + " 、ユーザー名は " + PlayFabData.DictPlayerInfos[receiverId].name + "です。過去の会話履歴のsenderIDがあなたのユーザーIDと同じ人物になりきってください。receiverIDではないことに注意してください。"}
+                new ChatGPTConnection.ChatGPTMessageModel() {role = "system", content = messageHistory + "\nあなたのユーザーIDは " + receiverId + " 、ユーザー名は " + PlayFabData.DictPlayerInfos[receiverId].name + "です。過去の会話履歴のsenderIDがあなたのユーザーIDと同じ人物になりきってください。receiverIDではないことに注意してください。"}
             );
             PlayFabData.CurrentAI = receiverId;
         }
+
+        PlayerData pd = PlayFabData.CurrentRoomPlayersRefs[receiverId].GetComponent<PlayerData>();
 	
         // ユーザーのメッセージを表示するオブジェクトを生成
         var waitObj = Instantiate(chat_obj, new Vector3(0f, 0f, 0f), Quaternion.identity);
         waitObj.GetComponent<TMP_Text>().text = "入力中...";
         waitObj.GetComponent<TMP_Text>().color = Color.white;
+        pd.SetIsInputting(true);
         // //sendObj.GetComponent<Image>().color = new Color(0.6f, 1.0f, 0.1f, 0.3f);
         // // GameObject Child = sendObj.transform.GetChild(1).gameObject;
         // // Debug.Log(Child);
@@ -80,6 +105,10 @@ public class GPTSendChat : MonoBehaviour
         // OpenAI GPTにリクエストを送信し、応答を待つ
         var response = await CurrentChatGPTConnection.RequestAsync(text);
         GameObject responseObj = null;
+
+        Destroy(waitObj);
+        pd.SetIsInputting(false);
+
         // 応答があれば処理を行う
         if (response.choices != null && response.choices.Length > 0)
         {
@@ -93,16 +122,17 @@ public class GPTSendChat : MonoBehaviour
             responseObj.GetComponent<TMP_Text>().text = choice.message.content;
             // 応答オブジェクトをコンテンツエリアの子要素として追加
             responseObj.transform.SetParent(content_obj.transform, false);
+            pd.IsChatting = true;
         }
         else
         {
-            Destroy(waitObj);
             responseObj.GetComponent<TMP_Text>().text = "";
         }
 
         if(responseObj != null)
         {
             chatUIManager.StartCoroutine(chatUIManager.DeleteSimpleMessage(7.0f, responseObj.gameObject));
+            pd.SetIsChattingDelay(true, 7.0f);
         }
     }
 }
