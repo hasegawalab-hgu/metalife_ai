@@ -22,7 +22,7 @@ public class ChatGPTConnection
     {
         _apiKey = apikey;
         _messageList.Add(
-            new ChatGPTMessageModel() {role = "user", content = prompt});
+            new ChatGPTMessageModel() {role = "system", content = prompt});
     }
 
     // メッセージモデル
@@ -54,7 +54,7 @@ public class ChatGPTConnection
         // APIリクエストのオプション（モデルとメッセージリスト）
         var options = new ChatGPTCompletionRequestModel()
         {
-            model = "gpt-3.5-turbo",
+            model = "gpt-4o",
             messages = _messageList
         };
         var jsonOptions = JsonConvert.SerializeObject(options);
@@ -66,7 +66,6 @@ public class ChatGPTConnection
             uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonOptions)),
             downloadHandler = new DownloadHandlerBuffer()
         };
-        Debug.Log(request.downloadHandler.text);
 
         // リクエストヘッダーを設定
         foreach (var header in headers)
