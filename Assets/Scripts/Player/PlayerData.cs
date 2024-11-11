@@ -11,6 +11,8 @@ using System;
 using Unity.Burst.CompilerServices;
 using UnityEngine.Analytics;
 using UnityEngine.UIElements;
+using UnityEngine.Tilemaps;
+using System.ComponentModel;
 
 public class Distance : IComparable<Distance>
 {
@@ -86,6 +88,7 @@ public class PlayerData : NetworkBehaviour
     public Material MyMat;
     GameObject MainLoby;
     GPTSendChat gsc;
+    private bool CheckMeetingRoomEntry = false;
 
     [SerializeField]
     public ChatGPTConnection chatGPTConnection;
@@ -392,7 +395,10 @@ public class PlayerData : NetworkBehaviour
             isChangeDMTaget = false;
         }
         */
+        
     }
+
+    
 
     public void ClickDM()
     {

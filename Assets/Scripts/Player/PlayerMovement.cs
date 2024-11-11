@@ -33,7 +33,8 @@ public class PlayerMovement : NetworkBehaviour
     private int count = 0;
 
     private Tilemap backgroundTilemap;
-    private Tilemap touchableObjectsTilemap; // 新しく追加するタイルマップ
+    private Tilemap touchableObjectsTilemap; 
+    private Tilemap officeGroundTilemap;
     // Animator animator;
 
     public override void Spawned()
@@ -45,9 +46,10 @@ public class PlayerMovement : NetworkBehaviour
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
-        // "background" と "TouchableObjects" の両方のタイルマップを取得
+        // 3つのタイルマップを取得
         backgroundTilemap = GameObject.Find("background").GetComponent<Tilemap>(); 
         touchableObjectsTilemap = GameObject.Find("TouchableObjects").GetComponent<Tilemap>();
+        officeGroundTilemap = GameObject.Find("OfficeGround").GetComponent<Tilemap>();  // 会議室用タイルマップを取得
     }
 
     public override void FixedUpdateNetwork()
@@ -85,9 +87,24 @@ public class PlayerMovement : NetworkBehaviour
                 {
                     OnMove(new Vector3(-_moveAmount, 0f, 0f), MyNetworkInput.InputType.LEFT);
                 }
+
+                // 会議室にいるかどうかをチェック
+                CheckMeetingRoomEntry(transform.position);
                 
             }
             
+        }
+    }
+
+    private void CheckMeetingRoomEntry(Vector3 position)
+    {
+        Vector3Int cellPos = officeGroundTilemap.WorldToCell(position);
+        var meetingTile = officeGroundTilemap.GetTile<Tile>(cellPos);
+
+        if (meetingTile != null)
+        {
+            //Debug.Log("会議室に入室しました。");
+            // 会議室に入った際に他の処理を行う場合、ここに追加可能
         }
     }
 
