@@ -87,12 +87,7 @@ public class PlayerMovement : NetworkBehaviour
                 {
                     OnMove(new Vector3(-_moveAmount, 0f, 0f), MyNetworkInput.InputType.LEFT);
                 }
-
-                // 会議室にいるかどうかをチェック
-                CheckMeetingRoomEntry(transform.position);
-                
             }
-            
         }
     }
 
@@ -118,7 +113,7 @@ public class PlayerMovement : NetworkBehaviour
         //animator.SetInteger("Direction", (int)currentInputType);
     }
 
-    private void OnMove(Vector3 dir, MyNetworkInput.InputType inputType)
+    public void OnMove(Vector3 dir, MyNetworkInput.InputType inputType)
     {
         CurrentInputType = (int)inputType;
 
