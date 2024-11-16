@@ -286,7 +286,7 @@ public class PlayerData : NetworkBehaviour
 
         if(this.PlayFabId != PlayFabSettings.staticPlayer.PlayFabId)
         {
-            if((transform.position.x - 0.5) * 2 % 2 == 0 && (transform.position.y - 0.5) * 2 % 2 == 0)
+            if(transform.position.x * 2 % 2 == 0 && transform.position.y * 2 % 2 == 0)
             {
                 if(localPlayer == null)
                 {
