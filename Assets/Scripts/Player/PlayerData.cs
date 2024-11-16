@@ -8,6 +8,8 @@ using TMPro;
 using Newtonsoft.Json;
 using System.Linq;
 using System;
+using Unity.Mathematics;
+using ExitGames.Client.Photon.StructWrapping;
 
 public class Distance : IComparable<Distance>
 {
@@ -109,9 +111,13 @@ public class PlayerData : NetworkBehaviour
     public bool IsChatting = false;
     public bool IsAI = false;
 
-    private float deltaTime;
-    private float interval = 20.0f;
+    private float deltaTime_API = 0;
+    private float deltaTime_move = 0;
+    private float interval_API = 20.0f;
+    private float interval_move = 1f;
     public string CurrentContent = "";
+
+    public Queue<int> Q_nextInputs = new Queue<int>();
 
     private void Awake()
     {
@@ -437,8 +443,9 @@ public class PlayerData : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        deltaTime += Runner.DeltaTime;
-        if(deltaTime >= interval)
+        deltaTime_API += Runner.DeltaTime;
+        deltaTime_move += Runner.DeltaTime;
+        if(deltaTime_API >= interval_API)
         {
             RPC_AddStateInfoRequest();
             /*
@@ -450,7 +457,30 @@ public class PlayerData : NetworkBehaviour
             Debug.Log(stateInfos);
             */
 
-            deltaTime = 0f;
+            deltaTime_API = 0f;
+        }
+
+        if (deltaTime_move >= interval_move && Q_nextInputs.Count > 0)
+        {
+            int dir = Q_nextInputs.Dequeue();
+
+            if (dir == 0)
+            {
+                pm.OnMove(new Vector3(0f, -pm._moveAmount, 0f), MyNetworkInput.InputType.BACKWARD);
+            }
+            if (dir == 1)
+            {
+                pm.OnMove(new Vector3(-pm._moveAmount, 0f, 0f), MyNetworkInput.InputType.LEFT);
+            }
+            if (dir == 2)
+            {
+                pm.OnMove(new Vector3(pm._moveAmount, 0f, 0f), MyNetworkInput.InputType.RIGHT);
+            }
+            if (dir == 3)
+            {
+                pm.OnMove(new Vector3(0f, pm._moveAmount, 0f), MyNetworkInput.InputType.FORWARD);
+            }
+            deltaTime_move = 0f;
         }
     }
     [Rpc(RpcSources.All,RpcTargets.StateAuthority)]
@@ -465,15 +495,17 @@ public class PlayerData : NetworkBehaviour
 
             // gpt送信
             string prompt = 
-                "あなたは2D世界の住人です。上下左右の向きと現在の座標を持ち、移動する時は必ずその方向に方向転換した後、1マスずつ動きます。" + 
+                "私のidは" + PlayFabSettings.staticPlayer.PlayFabId + "で、名前は" + GameObject.Find("LocalPlayer").GetComponent<PlayerData>().DisplayName + "です。" + 
+                "あなたは2D世界のAIプレイヤーです。上下左右の向きと現在の座標を持ち、移動する時は必ずその方向に方向転換した後、1マスずつ動きます。つまり、移動する方向をすでに向いている時はその方向に移動できますが、移動する方向と別の方向を向いている場合はその方向を向いてから移動しなければいけません" + 
                 "あなた以外にもプレイヤーがおり、それぞれコミュニケーションをとっています。ただし、各プレイヤーは3マス以内に近づかないと会話することができません。また、他のプレイヤーの中にはAIも混じっています。" +
-                "あなたにはこれからあなた自身のidと他のプレイヤーを含めた行動の履歴が送られます。" + 
-                "具体的には各プレイヤーごとに id:プレイヤーを識別するid、name: プレイヤーの名前、 pos: プレイヤーのボジション、 dir: プレイヤーが向いている方向（下:0、 左:1、 右:2、 上:3）、 IsAI: プレイヤーがAIかどうか、 IsChatting: 発言中かどうか、 content: 発言内容、 IsInputting: これから発言する内容を入力中かどうか  という情報が与えられます。" +
-                "あなたはこれらの情報をもとに全てのAIプレイヤーの次の行動を生成してもらいます。ただし、複数のAIプレイヤーがいても一つの回答でまとめて送信してください。全てのAIプレイヤーの行動生成結果をまとめてから送信してください。まだ全員の結果を生成していないのにレスポンスを送らないでください。" +
-                "プレイヤーhogehoge1234が生成した向きが0、プレイヤーtesttest1234が生成した向きが1の場合は形式は以下の通りです。これ以外に何も答えないでください。また、適切な回答を生成できないと判断した場合は空文字を英数字一字\"\"で返してください。" +
+                "あなたにはこれから全てのプレイヤーの行動の履歴が送られます。" + 
+                "具体的には各プレイヤーごとに id:プレイヤーを識別するid、name: プレイヤーの名前、 pos: プレイヤーのボジション、 dir: プレイヤーが向いている方向（動かない:-1、 下:0、 左:1、 右:2、 上:3）、 IsAI: プレイヤーがAIかどうか、 IsChatting: 発言中かどうか、 content: 発言内容、 IsInputting: これから発言する内容を入力中かどうか  という情報が与えられます。" +
+                "あなたはこれらの情報をもとに各AIプレイヤーの次の行動を20個ずつバラバラに生成してもらいます。" +
+                "私（" + PlayFabSettings.staticPlayer.PlayFabId + "）の周りにAIが集まるように行動を生成してください。もしも私の周りに集まったと判断した時は-1の要素を送信し続けてください。" + 
+                "プレイヤーhogehoge1234が生成した向きが0,2,1,3,3,2,1,2,0,1,-1,-1,-1,-1,-1、プレイヤーtesttest1234が生成した向きが-1,-1,-1,-1,-1,1,2,0,3,3,0,1,3,0,1の場合は形式は以下の通りです。jsonとしてdesirializeするのでこの形式を絶対に変更しないでください。'''jsonなどの文字列も加えないでください。また、これ以外に何も答えないでください。また、適切な回答を生成できないと判断した場合は空文字を英数字一字\"\"で返してください。" +
                 "{" + 
-                "id: \"hogehoge1234\" {dir: \"0\"}," +
-                "id: \"testtest1234\" {dir: \"1\"}" + 
+                "\"hogehoge1234\": [0,2,1,3,3,2,1,2,0,1,-1,-1,-1,-1,-1]," +
+                "\"testtest1234\": [-1,-1,-1,-1,-1,1,2,0,3,3,0,1,3,0,1]" + 
                 "}";
             ChatGPTConnection chatGPTConnection = new ChatGPTConnection(apikey: GPTSendChat.OpenAIApiKey, prompt: prompt);
             var settings = new JsonSerializerSettings
@@ -481,12 +513,31 @@ public class PlayerData : NetworkBehaviour
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
             string data = JsonConvert.SerializeObject(PlayFabData.DictPlayerStateInfos, settings);
-            var response = await chatGPTConnection.RequestAsync(data);
+            var response = await chatGPTConnection.RequestAsync(data.Trim('\"'));
             // 応答があれば処理を行う
             if (response.choices != null && response.choices.Length > 0)
             {
                 var choice = response.choices[0];
+
                 Debug.Log("ChatGPT Response: " + choice.message.content);
+                Dictionary<string, List<int>> result = new Dictionary<string, List<int>>();
+                if (!string.IsNullOrEmpty(choice.message.content))
+                {
+                    result = JsonConvert.DeserializeObject<Dictionary<string, List<int>>>(choice.message.content);
+                }
+
+                if (result != null)
+                {
+                    foreach (var ai in result)
+                    {
+                        var q = PlayFabData.CurrentRoomPlayersRefs[ai.Key].Q_nextInputs;
+                        q.Clear();
+                        for (int i = 0; i < ai.Value.Count; i++)
+                        {
+                            q.Enqueue(ai.Value[i]);
+                        }
+                    }
+                }
             }
             else
             {
