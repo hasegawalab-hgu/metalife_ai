@@ -500,6 +500,21 @@ public class PlayerData : NetworkBehaviour
                 player.Value.RPC_AddStateInfo();
             }
 
+            int index = PlayFabData.ListDictPlayerStateInfo.Count;
+            if(index >= PlayFabData.PlayerStateInfoLength)
+            {
+                for(int i = 0; i < index - 1; i++)
+                {
+                    PlayFabData.ListDictPlayerStateInfo[i] = PlayFabData.ListDictPlayerStateInfo[i + 1];
+                }
+                index -= 1;
+            }
+            foreach(var dict in PlayFabData.DictPlayerStateInfos)
+            {
+                PlayFabData.ListDictPlayerStateInfo[index][dict.Key] = dict.Value;
+            }
+            UpdatePlayerInfos();
+
             // gpt送信
             string prompt = 
                 "私のidは" + PlayFabSettings.staticPlayer.PlayFabId + "で、名前は" + GameObject.Find("LocalPlayer").GetComponent<PlayerData>().DisplayName + "です。" + 
@@ -519,7 +534,7 @@ public class PlayerData : NetworkBehaviour
             {
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             };
-            string data = JsonConvert.SerializeObject(PlayFabData.DictPlayerStateInfos, settings);
+            string data = JsonConvert.SerializeObject(PlayFabData.ListDictPlayerStateInfo, settings);
             var response = await chatGPTConnection.RequestAsync(data.Trim('\"'));
             // 応答があれば処理を行う
             if (response.choices != null && response.choices.Length > 0)
@@ -568,7 +583,6 @@ public class PlayerData : NetworkBehaviour
                     {
                         contentObj = simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
                         content = contentObj.transform.GetChild(contentObj.transform.childCount - 1).gameObject.GetComponent<TMP_Text>().text;
-                        Debug.Log("rpccccccccc " + this.DisplayName + " " + content);
                     }
                 }
             }
@@ -608,7 +622,6 @@ public class PlayerData : NetworkBehaviour
             
             if(PlayFabData.DictDMScripts.ContainsKey(Targets[0].Id))
             {
-                Debug.Log(Targets[0].Id);
                 PlayFabData.DictDMScripts[Targets[0].Id].OnClickButton();
                 chatUIManager.text_targets.text = "To : " + string.Join(", ", PlayFabData.DictPlayerInfos[Targets[0].Id].name);
             }
@@ -1006,6 +1019,29 @@ public class PlayerData : NetworkBehaviour
         {
             SharedGroupId = PlayFabData.CurrentSharedGroupId,
             Data = new Dictionary<string, string> {{"Players", jsonData}},
+            Permission = UserDataPermission.Public
+        };
+        PlayFabClientAPI.UpdateSharedGroupData(request, 
+            result => 
+                {
+                    Debug.Log("Players更新成功");
+                },
+            e => e.GenerateErrorReport());
+    }
+
+    private void UpdatePlayerStateInfo()
+    {
+        if (PlayFabData.ListDictPlayerStateInfo.Count == 0)
+        {
+            return;
+        }
+
+        string jsonData = JsonConvert.SerializeObject(PlayFabData.ListDictPlayerStateInfo);
+
+        var request = new UpdateSharedGroupDataRequest
+        {
+            SharedGroupId = PlayFabData.CurrentSharedGroupId,
+            Data = new Dictionary<string, string> {{"PlayerStateInfos", jsonData}},
             Permission = UserDataPermission.Public
         };
         PlayFabClientAPI.UpdateSharedGroupData(request, 

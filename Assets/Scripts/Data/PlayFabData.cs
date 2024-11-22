@@ -62,7 +62,8 @@ public class PlayFabData : MonoBehaviour
     public static Dictionary<string, PlayerInfo> DictPlayerInfos = new Dictionary<string, PlayerInfo>();
     public static Dictionary<string, Vector3> DictDistance = new Dictionary<string, Vector3>();
     public static Dictionary<string, PlayerStateInfo> DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
-
+    public static List<Dictionary<string, PlayerStateInfo>> ListDictPlayerStateInfo = new List<Dictionary<string,PlayerStateInfo>>();
+    public static int PlayerStateInfoLength {private set; get; } = 10;
     public static Dictionary<string, List<MessageData>> DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
 
     public static void Initialize()
@@ -82,5 +83,6 @@ public class PlayFabData : MonoBehaviour
         DictPlayerInfos = new Dictionary<string, PlayerInfo>();
         DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
         DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
+        ListDictPlayerStateInfo = new List<Dictionary<string, PlayerStateInfo>>();
     }
 }
