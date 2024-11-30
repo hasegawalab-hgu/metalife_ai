@@ -63,6 +63,12 @@ public class PlayFabLoginAndSignup : MonoBehaviour
                     PlayFabData.CurrentRoomChannels = JsonConvert.DeserializeObject<Dictionary<string, ChannelData>>(jsonData);
                 }
 
+                if(result.Data.ContainsKey("DictListPlayerStateInfo"))
+                {
+                    string jsonData = result.Data["DictListPlayerStateInfo"].Value;
+                    PlayFabData.DictListPlayerStateInfo = JsonConvert.DeserializeObject<Dictionary<string, List<PlayerStateInfo>>>(jsonData);
+                }
+
                 if(result.Data.ContainsKey("Players"))
                 {
                     string jsonData = result.Data["Players"].Value;
