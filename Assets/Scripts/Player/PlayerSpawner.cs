@@ -24,7 +24,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             GetPlayerInfos(PlayFabSettings.staticPlayer.PlayFabId);
             if(Runner.SessionInfo.PlayerCount == 1 && Runner.IsSharedModeMasterClient)
             {
-                var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(0, 0, 0), inputAuthority: this.Runner.LocalPlayer);
+                var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(8, 14, 0), inputAuthority: this.Runner.LocalPlayer);
                 PlayerData pd = localPlayer.GetComponent<PlayerData>();
                 pd.IsHost = true;
                 pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
@@ -56,12 +56,12 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                     }
                     if(spawned == false)
                     {
-                        SpawnLocalPlayer(new Vector3(0, 0, 0));
+                        SpawnLocalPlayer(new Vector3(8.5f, 14.5f, 0));
                     }
                 }
                 else
                 {
-                    var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(0, 0, 0), inputAuthority: this.Runner.LocalPlayer);
+                    var localPlayer = Runner.Spawn(prefabRef:PlayerPrefab, new Vector3(8.5f, 14.5f, 0), inputAuthority: this.Runner.LocalPlayer);
                     PlayerData pd = localPlayer.GetComponent<PlayerData>();
                     pd.PlayFabId = PlayFabSettings.staticPlayer.PlayFabId;
                     // pd.IsOnline = true;
@@ -146,7 +146,7 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
                         if(info.Key != playFabId)
                         {
                             ids.Add(info.Key);
-                            positions.Add(new Vector3(0 + (count * 2), 0, 0f));
+                            positions.Add(new Vector3(2 + (count * 2), 14, 0f));
                             count++;
                         }
                     }
