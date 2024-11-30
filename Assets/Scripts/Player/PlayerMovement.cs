@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEditor.Rendering;
 using UnityEngine.Tilemaps;
+using TMPro;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -32,9 +33,14 @@ public class PlayerMovement : NetworkBehaviour
 
     private int count = 0;
 
-    private Tilemap backgroundTilemap;
-    private Tilemap touchableObjectsTilemap; 
-    private Tilemap officeGroundTilemap;
+    private Tilemap backgroundTilemap;  //背景のタイルマップ
+    private Tilemap touchableObjectsTilemap;  //衝突判定のあるタイルマップ
+    private Tilemap officeGroundTilemap;  //会議室タイルマップ
+    private Tilemap chairTilemap;  //座れるタイルマップ用
+    private PlayerData playerData;  //クラスのフィールドとして定義
+
+    
+
     // Animator animator;
 
     public override void Spawned()
@@ -46,12 +52,15 @@ public class PlayerMovement : NetworkBehaviour
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
-        // 3つのタイルマップを取得
+        // タイルマップを取得
         backgroundTilemap = GameObject.Find("background").GetComponent<Tilemap>(); 
         touchableObjectsTilemap = GameObject.Find("TouchableObjects").GetComponent<Tilemap>();
         officeGroundTilemap = GameObject.Find("OfficeGround").GetComponent<Tilemap>();  // 会議室用タイルマップを取得
+        chairTilemap = GameObject.Find("ChairTilemap").GetComponent<Tilemap>(); // 座れるタイルマップ
+        playerData = GetComponent<PlayerData>(); // PlayerData インスタンスを取得
     }
 
+    
     public override void FixedUpdateNetwork()
     {
 
@@ -68,6 +77,13 @@ public class PlayerMovement : NetworkBehaviour
 
         if (GetInput<MyNetworkInput>(out var input))
         {
+            // 座っている場合、移動を無効にする
+            if (playerData.isSitting)
+            {
+                Debug.Log("座っているので移動できません");
+                return;
+            }
+
             if (_isMoving == false)
             {
                 
@@ -87,20 +103,93 @@ public class PlayerMovement : NetworkBehaviour
                 {
                     OnMove(new Vector3(-_moveAmount, 0f, 0f), MyNetworkInput.InputType.LEFT);
                 }
+                
             }
         }
     }
 
-    private void CheckMeetingRoomEntry(Vector3 position)
+    void Update()
+    {
+        // "E"キーを押したときに座る/立つ処理を呼び出す
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            TrySitOnChair();
+        }
+
+        
+    }
+
+
+    // 椅子に座る/立つ操作
+    public void TrySitOnChair()
+    {
+        if (playerData.isSitting)
+        {
+            playerData.isSitting = false; // 立つ
+            Debug.Log("立ち上がった");
+        }
+        else
+        {
+            if (IsNearChairTile())
+            {
+                playerData.isSitting = true;  // 座る
+                Debug.Log("椅子に座った");
+            }
+            else
+            {
+                //Debug.Log("椅子の近くにいません。座れません。");
+            }
+        }
+    }
+
+    // 現在位置の1マス以内にChairTileがあるか判定
+    private bool IsNearChairTile()
+    {
+        // 現在のセル位置を取得
+        Vector3Int currentCellPos = chairTilemap.WorldToCell(transform.position);
+
+        // 上下左右の相対位置
+        Vector3Int[] directions = new Vector3Int[]
+        {
+            new Vector3Int(0, 1, 0),  // 上
+            new Vector3Int(0, -1, 0), // 下
+            new Vector3Int(1, 0, 0),  // 右
+            new Vector3Int(-1, 0, 0)  // 左
+        };
+
+        // 周囲のセルをチェック
+        foreach (var direction in directions)
+        {
+            Vector3Int neighborCellPos = currentCellPos + direction;
+            var chairTile = chairTilemap.GetTile<Tile>(neighborCellPos);
+
+            if (chairTile != null)
+            {
+                return true; // 椅子タイルが見つかったらtrueを返す
+            }
+        }
+
+        // 周囲に椅子タイルがなかった場合
+        return false;
+    }
+
+
+
+    public void CheckMeetingRoomEntry(Vector3 position)
     {
         Vector3Int cellPos = officeGroundTilemap.WorldToCell(position);
+        Debug.Log($"現在位置のセル座標: {cellPos}");
         var meetingTile = officeGroundTilemap.GetTile<Tile>(cellPos);
-
         if (meetingTile != null)
         {
-            //Debug.Log("会議室に入室しました。");
-            // 会議室に入った際に他の処理を行う場合、ここに追加可能
+            playerData.CheckMeetingRoomEntry = true;
+            Debug.Log("会議室に入室しました。");
         }
+            else
+            {
+                playerData.CheckMeetingRoomEntry = false;
+                Debug.Log("会議室外です。");
+            }
     }
 
     public override void Render()
