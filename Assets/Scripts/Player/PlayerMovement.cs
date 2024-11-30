@@ -122,7 +122,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         CurrentInputType = (int)inputType;
 
-        if(chatUIManager.inputField.isFocused)
+        if(!pd.IsAI && chatUIManager.inputField.isFocused)
         {
             return;
         }

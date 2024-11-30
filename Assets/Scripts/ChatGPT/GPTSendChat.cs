@@ -54,7 +54,6 @@ public class GPTSendChat : MonoBehaviour
 
             var key = parts[0].Trim();
             var value = parts[1].Trim();
-            Debug.Log("" + value);
             Environment.SetEnvironmentVariable(key, value);
         }
         OpenAIApiKey = Environment.GetEnvironmentVariable("GATHER_LAB_GPT_KEY");

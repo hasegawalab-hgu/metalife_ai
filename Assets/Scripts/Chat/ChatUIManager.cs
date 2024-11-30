@@ -407,7 +407,10 @@ public class ChatUIManager : MonoBehaviour
             int result = string.Compare(messageData.SenderId, messageData.ReceiverId);
             string DMScriptsKey = messageData.SenderId == PlayFabSettings.staticPlayer.PlayFabId ? messageData.ReceiverId : messageData.SenderId;
             string readMessageKey = result == -1 ? messageData.SenderId + "+" + messageData.ReceiverId : result == 1 ? messageData.ReceiverId + "+" + messageData.SenderId : messageData.SenderId;
-            messageDatas = PlayFabData.DictDMScripts[DMScriptsKey].messageDatas;
+            if(PlayFabData.DictDMScripts.ContainsKey(DMScriptsKey))
+            {
+                messageDatas = PlayFabData.DictDMScripts[DMScriptsKey].messageDatas;
+            }
 
             if(PlayFabData.DictReadMessageCount.ContainsKey(readMessageKey))
             {
