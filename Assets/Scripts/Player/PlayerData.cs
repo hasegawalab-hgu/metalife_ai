@@ -116,7 +116,11 @@ public class PlayerData : NetworkBehaviour
     public Material MyMat;
     GameObject MainLoby;
     GPTSendChat gsc;
-    private bool CheckMeetingRoomEntry = false;
+    public bool CheckMeetingRoomEntry = false;
+
+    [Networked]
+    public bool isSitting {get; set;} = false;
+
 
     [SerializeField]
     public ChatGPTConnection chatGPTConnection;
@@ -136,6 +140,7 @@ public class PlayerData : NetworkBehaviour
     public string CurrentContent = "";
 
     public Queue<int> Q_nextInputs = new Queue<int>();
+    
 
     private void Awake()
     {
@@ -273,6 +278,7 @@ public class PlayerData : NetworkBehaviour
 
     public void Update()
     {
+        
         if (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
         {
             IsAI = true;
@@ -593,9 +599,10 @@ public class PlayerData : NetworkBehaviour
         }
         */
         
+        
     }
 
-    
+
 
     private void MoveAI()
     {
