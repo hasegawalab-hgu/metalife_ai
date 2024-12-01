@@ -78,14 +78,16 @@ public class ChannelButton : MonoBehaviour
             chatUIManager.inputField.text = beforeSendText;
         }
         */
-
-        if (PlayFabData.CurrentRoomChannels[channelData.ChannelId].ChannelType == "Public")
+        if(PlayFabData.CurrentRoomChannels.ContainsKey(channelData.ChannelId))
         {
-            chatUIManager.text_channelName.text = "# " + channelData.ChannelName;
-        }
-        else
-        {
-            chatUIManager.text_channelName.text = channelData.ChannelName;
+            if (PlayFabData.CurrentRoomChannels[channelData.ChannelId].ChannelType == "Public")
+            {
+                chatUIManager.text_channelName.text = "# " + channelData.ChannelName;
+            }
+            else
+            {
+                chatUIManager.text_channelName.text = channelData.ChannelName;
+            }
         }
         PlayFabData.CurrentChannelId = channelData.ChannelId;
         PlayFabData.CurrentMessageTarget = "All";

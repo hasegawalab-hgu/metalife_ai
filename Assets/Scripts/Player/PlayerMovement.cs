@@ -25,6 +25,7 @@ public class PlayerMovement : NetworkBehaviour
     private float animatorSpeed {get; set;}
 
     private List<Sprite> sprites = new List<Sprite>();
+    private PlayerData pd;
     private SpriteRenderer sr;
 
     [Networked]
@@ -35,6 +36,9 @@ public class PlayerMovement : NetworkBehaviour
     private Tilemap backgroundTilemap;
     private Tilemap touchableObjectsTilemap; 
     private Tilemap officeGroundTilemap;
+
+    private int stateInfoUpdateCount = 0;
+    private const int stateInfoUpdateMaxCount = 5;
     // Animator animator;
 
     public override void Spawned()
@@ -44,6 +48,7 @@ public class PlayerMovement : NetworkBehaviour
         _currentDir = new Vector3(0f, _moveAmount, 0f);
         lgm = GameObject.Find("LocalGameManager").GetComponent<LocalGameManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
+        pd = GetComponent<PlayerData>();
         sprites = GetComponent<PlayerData>().sprites;
         sr = GetComponent<SpriteRenderer>();
         // 3つのタイルマップを取得
@@ -117,7 +122,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         CurrentInputType = (int)inputType;
 
-        if(chatUIManager.inputField.isFocused)
+        if(!pd.IsAI && chatUIManager.inputField.isFocused)
         {
             return;
         }
@@ -179,6 +184,14 @@ public class PlayerMovement : NetworkBehaviour
         currentSpriteIndex = (int)inputType * 3 + 1;
         animatorSpeed = 0f;
         transform.position = targetPos;
+        /*
+        stateInfoUpdateCount++;
+        if(!pd.IsAI && stateInfoUpdateCount == stateInfoUpdateMaxCount)
+        {
+            pd.UpdateListStateInfo();
+            stateInfoUpdateCount = 0;
+        }
+        */
         _isMoving = false;
     }
 

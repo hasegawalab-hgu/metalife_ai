@@ -37,6 +37,7 @@ public class GPTSendChat : MonoBehaviour
 
     void Awake()
     {
+        /*
         string filePath = ".env";
         if (!File.Exists(filePath))
         {
@@ -56,7 +57,8 @@ public class GPTSendChat : MonoBehaviour
             var value = parts[1].Trim();
             Environment.SetEnvironmentVariable(key, value);
         }
-        OpenAIApiKey = Environment.GetEnvironmentVariable("GATHER_LAB_GPT_KEY");
+        */
+        OpenAIApiKey = PlayerPrefs.GetString("GATHER_LAB_GPT_KEY", "");
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
     }
 

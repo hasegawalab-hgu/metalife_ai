@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Fusion;
+using Unity.Collections;
 using UnityEngine;
 
 public class PlayerInfo
@@ -12,20 +13,22 @@ public class PlayerInfo
 
 public class PlayerStateInfo
 {
-    public string id;
+    public int time;
     public string name;
-    public Vector3 pos;
+    public float x;
+    public float y;
     public int dir;
     public bool isAI;
     public bool isChatting;
     public string content;
     public bool isInputting;
 
-    public PlayerStateInfo(string id, string name, Vector3 pos, int dir, bool isAI, bool isChatting, string content, bool isInputting)
+    public PlayerStateInfo(int time, string name, Vector3 pos, int dir, bool isAI, bool isChatting, string content, bool isInputting)
     {
-        this.id = id;
+        this.time = time;
         this.name = name;
-        this.pos = pos;
+        this.x = pos.x;
+        this.y = pos.y;
         this.dir = dir;
         this.isAI = isAI;
         this.isChatting = isChatting;
@@ -62,8 +65,11 @@ public class PlayFabData : MonoBehaviour
     public static Dictionary<string, PlayerInfo> DictPlayerInfos = new Dictionary<string, PlayerInfo>();
     public static Dictionary<string, Vector3> DictDistance = new Dictionary<string, Vector3>();
     public static Dictionary<string, PlayerStateInfo> DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
-
+    public static Dictionary<string, List<PlayerStateInfo>> DictListPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
+    public static Dictionary<string, List<PlayerStateInfo>> DictListLatestPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
+    public static int PlayerStateInfoLength {private set; get; } = 3;
     public static Dictionary<string, List<MessageData>> DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
+    public static List<Distance> LocalPlayerTargets = new List<Distance>();
 
     public static void Initialize()
     {
@@ -82,5 +88,8 @@ public class PlayFabData : MonoBehaviour
         DictPlayerInfos = new Dictionary<string, PlayerInfo>();
         DictPlayerStateInfos = new Dictionary<string, PlayerStateInfo>();
         DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
+        DictListPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
+        DictListLatestPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
+        LocalPlayerTargets = new List<Distance>();
     }
 }

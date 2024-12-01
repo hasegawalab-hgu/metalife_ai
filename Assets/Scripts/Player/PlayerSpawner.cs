@@ -10,12 +10,46 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
 {
     public NetworkPrefabRef PlayerPrefab;
     GameObject playerContainer;
+    PlayFabLogout logout;
+
+    /*
+    private void Start()
+    {
+        Invoke("CheckDoubleLogin", 0.01f);
+    }
+
+    private void CheckDoubleLogin()
+    {
+        GameObject players = GameObject.Find("Players");
+        for (int i = 0; i < players.transform.childCount; i++)
+        {
+            if(players.transform.GetChild(i).GetComponent<PlayerData>().PlayFabId.Equals(PlayFabSettings.staticPlayer.PlayFabId))
+            {
+                Debug.Log("このアカウントはすでにログインしています");
+                GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>().OnClickLogout();
+                return;
+            }
+        }
+        logout = GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>();
+    }
+    */
 
     public void PlayerJoined(PlayerRef player)
     {
+        GameObject players = GameObject.Find("Players");
         Debug.Log(Runner.SessionInfo.PlayerCount);
         if (player == Runner.LocalPlayer)
         {
+            for (int i = 0; i < players.transform.childCount; i++)
+            {
+                if(players.transform.GetChild(i).GetComponent<PlayerData>().PlayFabId.Equals(PlayFabSettings.staticPlayer.PlayFabId) && players.transform.GetChild(i).GetComponent<NetworkObject>().InputAuthority != default(PlayerRef))
+                {
+                    Debug.Log(players.transform.GetChild(i).GetComponent<NetworkObject>().InputAuthority);
+                    Debug.LogError("このアカウントはすでにログインしています");
+                    GameObject.Find("LocalGameManager").GetComponent<PlayFabLogout>().OnClickLogout();
+                    return;
+                }
+            }
             if(PlayerPrefab == default(NetworkPrefabRef)) // PlayerPrefabは何も設定されていない場合、nullにならない
             {
                 PlayerPrefab = GameObject.Find("PlayerPrefabs").GetComponent<PlayerPrefabs>().playerPrefabs[0];
@@ -37,7 +71,6 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
             }
             else
             {
-                var players = GameObject.Find("Players");
                 if(PlayFabData.DictPlayerInfos.ContainsKey(PlayFabSettings.staticPlayer.PlayFabId))
                 {
                     bool spawned = false;
