@@ -14,12 +14,19 @@ public class PlayFabLogin : PlayFabLoginAndSignup
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField passwordInput;
     [SerializeField] private Toggle KeepLoginInfo;
+    [SerializeField] private TMP_InputField chatGPTApiKeyInput;
+    private string ChatGPTApiKey;
 
     void Start()
     {
         usernameInput.text = "";
         passwordInput.text = "";
         KeepLoginInfo.isOn = false;
+        ChatGPTApiKey = PlayerPrefs.GetString("GATHER_LAB_GPT_KEY", "");
+        if(!string.IsNullOrEmpty(ChatGPTApiKey))
+        {
+            chatGPTApiKeyInput.gameObject.SetActive(false);
+        }
         if (PlayFabData.Islogouted == false)
         {
             OnLoginWithDevice();
@@ -32,6 +39,21 @@ public class PlayFabLogin : PlayFabLoginAndSignup
 
     void OnLoginWithDevice()
     {
+        if(string.IsNullOrEmpty(ChatGPTApiKey))
+        {
+            if(string.IsNullOrEmpty(chatGPTApiKeyInput.text))
+            {
+                Debug.Log("ChatGPTのAPIKeyが入力されていません");
+                messageText.SetText("ChatGPTのAPIKeyが入力されていません");
+                return;
+            }
+            else
+            {
+                PlayerPrefs.SetString("GATHER_LAB_GPT_KEY", chatGPTApiKeyInput.text);
+                PlayerPrefs.Save();
+            }
+        }
+
         // デバイスによる一意の値
         var customId = SystemInfo.deviceUniqueIdentifier;
 
@@ -84,6 +106,21 @@ public class PlayFabLogin : PlayFabLoginAndSignup
     // カスタムIDでのログインに失敗した場合は、ユーザー名とパスワードでログイン
     public void OnLoginWIthPlayFab()
     {
+        if(string.IsNullOrEmpty(ChatGPTApiKey))
+        {
+            if(string.IsNullOrEmpty(chatGPTApiKeyInput.text))
+            {
+                Debug.Log("ChatGPTのAPIKeyが入力されていません");
+                messageText.SetText("ChatGPTのAPIKeyが入力されていません");
+                return;
+            }
+            else
+            {
+                PlayerPrefs.SetString("GATHER_LAB_GPT_KEY", chatGPTApiKeyInput.text);
+                PlayerPrefs.Save();
+            }
+        }
+
         var request = new LoginWithPlayFabRequest
         {
             Username = usernameInput.text,
