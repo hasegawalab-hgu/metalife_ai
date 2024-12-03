@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using System.Linq;
 using System;
 using ExitGames.Client.Photon;
+using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 [Serializable]
 public class Distance : IComparable<Distance>
@@ -100,7 +102,13 @@ public class PlayerData : NetworkBehaviour
     private PlayFabLogout logout;
 
     public GameObject simpleChatView;
-    private RectTransform rt; // simpleChatViewのrecttransform
+    public GameObject reactionObj;
+    private RectTransform svrt; // simpleChatViewのrecttransform
+    private RectTransform rort; // reactionObjのrecttransform
+
+    public int ReactionNum = -1;
+
+    public Sprite ReactionSprite;
 
     private GameObject localPlayer;
 
@@ -238,8 +246,14 @@ public class PlayerData : NetworkBehaviour
         simpleChatView = Instantiate(chatUIManager.spawner_simple_message, new Vector3(0f,0f,0f), Quaternion.identity);
         simpleChatView.transform.SetParent(chatUIManager.Canvas.transform);
         PlayFabData.DictSpawnerSimpleMessage[this.PlayFabId] = simpleChatView.transform.GetChild(0).gameObject.transform.GetChild(0).gameObject;
-        rt = simpleChatView.GetComponent<RectTransform>();
+        svrt = simpleChatView.GetComponent<RectTransform>();
         cam = GameObject.Find("Main Camera").GetComponent<Camera>();
+
+        reactionObj = Instantiate(chatUIManager.reaction_Pref, new Vector3(0f,0f,0f), Quaternion.identity);
+        reactionObj.transform.SetParent(chatUIManager.Canvas.transform);
+        rort = reactionObj.GetComponent<RectTransform>();
+        ReactionSprite = reactionObj.transform.GetChild(0).transform.GetChild(0).gameObject.GetComponent<Sprite>();
+        rort.gameObject.SetActive(false);
 
         if(cm != null && cm.transform.childCount > 0)
         {
@@ -288,9 +302,15 @@ public class PlayerData : NetworkBehaviour
             IsAI = false;
         }
 
-        if(rt != null)
+        if(svrt != null)
         {
-            rt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+            svrt.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+        }
+
+        if(rort != null)
+        {
+            rort.position = cam.WorldToScreenPoint(new Vector3(transform.position.x, transform.position.y, 0f));
+            rort.anchoredPosition = new Vector2(rort.anchoredPosition.x + 100, rort.anchoredPosition.y + 50);
         }
 
         if(IsInputting != isInputting)
@@ -305,7 +325,7 @@ public class PlayerData : NetworkBehaviour
             }
             else
             {
-                if(HasInputAuthority)
+                if(!IsAI)
                 {
                     if(inputtingText == null)
                     {
@@ -970,6 +990,37 @@ public class PlayerData : NetworkBehaviour
         }
     }
 
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_SendReactionRequest(string playFabId, int reactionNum)
+    {
+        if(HasStateAuthority)
+        {
+            RPC_SendReaction(playFabId, reactionNum);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_SendReaction(string playFabId, int reactionNum)
+    {
+        if(this.PlayFabId == playFabId && this.ReactionNum < 0)
+        {
+            this.ReactionNum = reactionNum;
+            rort.gameObject.SetActive(true);
+            Image image = rort.transform.GetChild(0).transform.GetChild(0).gameObject.GetComponent<Image>();
+            image.color = new Color(255, 255, 255, 255);
+            image.sprite = chatUIManager.reactions[reactionNum];
+            Invoke("DeleteReaction", 5f);
+        }
+    }
+
+    private void DeleteReaction()
+    {
+        ReactionNum = -1;
+        Image image = rort.transform.GetChild(0).transform.GetChild(0).gameObject.GetComponent<Image>();
+        image.sprite = null;
+        reactionObj.gameObject.SetActive(false);
+    }
+
     private void CheckDoubleLogin()
     {
         if(PlayFabData.CurrentRoomPlayersRefs.ContainsKey(this.PlayFabId))
@@ -1037,6 +1088,10 @@ public class PlayerData : NetworkBehaviour
         if(simpleChatView != null)
         {
             Destroy(simpleChatView.gameObject);
+        }
+        if (reactionObj != null)
+        {
+            Destroy(reactionObj.gameObject);
         }
         // if (PlayFabData.DictDMScripts.ContainsKey(this.PlayFabId))
         // {
