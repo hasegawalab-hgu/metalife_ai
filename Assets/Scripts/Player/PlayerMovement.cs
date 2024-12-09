@@ -230,6 +230,19 @@ public class PlayerMovement : NetworkBehaviour
             _currentDir = dir;
             currentSpriteIndex = (int)inputType * 3 + 1;
         }
+
+        if(pd.Q_moveLog.Count < 100)
+        {
+            pd.Q_moveLog.Enqueue((int)inputType);
+        }
+        else
+        {
+            while(pd.Q_moveLog.Count >= 100)
+            {
+                pd.Q_moveLog.Dequeue();
+            }
+            pd.Q_moveLog.Enqueue((int)inputType);
+        }
     }
 
     IEnumerator Move(Vector3 dir, MyNetworkInput.InputType inputType)
