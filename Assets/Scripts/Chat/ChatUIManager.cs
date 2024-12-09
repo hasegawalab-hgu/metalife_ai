@@ -62,6 +62,15 @@ public class ChatUIManager : MonoBehaviour
     public Button button_selectCharacter;
     [SerializeField]
     public TMP_Text text_targets;
+    [SerializeField]
+    public GameObject reaction_spawner;
+    [SerializeField]
+    public GameObject reaction_Pref;
+    [SerializeField]
+    public GameObject reaction_buttonPref;
+    [SerializeField]
+    public List<Sprite> reactions = new List<Sprite>();
+    private int reactionNum = -1;
 
     // channel作成時に使用
     [SerializeField]
@@ -89,6 +98,8 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     private TMP_Dropdown dd_channelType;
 
+    private PlayerData lpd;
+
     void Awake()
     {
         gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
@@ -104,6 +115,15 @@ public class ChatUIManager : MonoBehaviour
         csf = spawner_message.GetComponent<ContentSizeFitter>();
         inputField.onValidateInput += ValidateInput;
         text_channelName.text = "# general"; // generalなので#をつける
+
+        for(int i = 0; i < reactions.Count; i++)
+        {
+            var obj = Instantiate(reaction_buttonPref, new Vector3(0f, 0f, 0f), Quaternion.identity);
+            obj.transform.SetParent(reaction_spawner.transform);
+            Image image = obj.GetComponent<Image>();
+            obj.GetComponent<ReactionButton>().ReactionNum = i;
+            image.sprite = reactions[i];
+        }
         DisplayChannelTargets();
         DisplayDMTargets();
     }
@@ -128,6 +148,11 @@ public class ChatUIManager : MonoBehaviour
         else if(lgm.LocalGameState == LocalGameManager.GameState.ChatAndSettings)
         {
             ChatAndSettingUI.SetActive(true);
+        }
+
+        if(lpd == null && GameObject.Find("LocalPlayer") != null)
+        {
+            lpd = GameObject.Find("LocalPlayer").GetComponent<PlayerData>();
         }
     }
 
@@ -508,6 +533,14 @@ public class ChatUIManager : MonoBehaviour
             ChatUI.SetActive(false);
             SelectCharacterUI.SetActive(true);
             button_text.text = "Return";
+        }
+    }
+
+    public void OnClickReactionButton()
+    {
+        if(lpd.ReactionNum >= 0)
+        {
+            lpd.RPC_SendReactionRequest(lpd.PlayFabId, reactionNum);
         }
     }
 }

@@ -22,8 +22,10 @@ public class PlayerStateInfo
     public bool isChatting;
     public string content;
     public bool isInputting;
+    public int reactionNum;
+    public int[] moveLog;
 
-    public PlayerStateInfo(int time, string name, Vector3 pos, int dir, bool isAI, bool isChatting, string content, bool isInputting)
+    public PlayerStateInfo(int time, string name, Vector3 pos, int dir, bool isAI, bool isChatting, string content, bool isInputting, int reactionNum, int[] moveLog)
     {
         this.time = time;
         this.name = name;
@@ -34,6 +36,8 @@ public class PlayerStateInfo
         this.isChatting = isChatting;
         this.content = content;
         this.isInputting = isInputting;
+        this.reactionNum = reactionNum;
+        this.moveLog = moveLog;
     }
 }
 
