@@ -146,6 +146,7 @@ public class PlayerData : NetworkBehaviour
     private float interval_API = 15.0f;
     private float interval_move = 0.5f;
     public string CurrentContent = "";
+    private int beforeTargetsCount = 0;
 
     public Queue<int> Q_nextInputs = new Queue<int>();
     
@@ -505,7 +506,18 @@ public class PlayerData : NetworkBehaviour
         else
         {
             chatUIManager.inputField.gameObject.SetActive(false);
+            if(beforeTargetsCount != 0)
+            {
+                for(int i = 0;  i < playerContainer.transform.childCount; i++)
+                {
+                    var pd = playerContainer.transform.GetChild(i).gameObject.GetComponent<PlayerData>();
+                    pd.SetShaderColor(Color.green);
+                    pd.SetShaderOutlineTickness(0f);
+                }
+            }
         }
+
+        beforeTargetsCount = Targets.Count;
 
         if(Targets.Count > 0)
         {
