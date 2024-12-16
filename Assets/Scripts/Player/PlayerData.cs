@@ -10,6 +10,7 @@ using System;
 using ExitGames.Client.Photon;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using UnityEngine.XR;
 
 [Serializable]
 public class Distance : IComparable<Distance>
@@ -110,7 +111,7 @@ public class PlayerData : NetworkBehaviour
 
     public Sprite ReactionSprite;
 
-    private GameObject localPlayer;
+    public GameObject localPlayer;
 
     private Camera cam;
 
@@ -144,10 +145,11 @@ public class PlayerData : NetworkBehaviour
     private float deltaTime_API = 0;
     private float deltaTime_move = 0;
     private float interval_API = 15.0f;
-    private float interval_move = 0.5f;
+    private float interval_move = 0.125f;
     public string CurrentContent = "";
     private int beforeTargetsCount = 0;
 
+    [SerializeField]
     public Queue<int> Q_nextInputs = new Queue<int>();
     public Queue<int> Q_moveLog = new Queue<int>();
 
@@ -243,6 +245,29 @@ public class PlayerData : NetworkBehaviour
             // 他ユーザーのテキストUIを設定
             Invoke("SetTextDisplayName", 2f); // すぐに実行すると反映されていないため1秒後に実行
         }
+        /*
+        if(PlayFabData.ChairOrder.Count == 0)
+        {
+            PlayFabData.ChairOrder.Add(this.PlayFabId);
+        }
+
+        for(int i = 0; i < PlayFabData.ChairOrder.Count; i++)
+        {
+            if(string.IsNullOrEmpty(PlayFabData.ChairOrder[i]))
+            {
+                Debug.Log(this.PlayFabId);
+                PlayFabData.ChairOrder[i] = this.PlayFabId;
+                break;
+            }
+            else
+            {
+                if(i == PlayFabData.ChairOrder.Count - 1)
+                {
+                    PlayFabData.ChairOrder.Add(this.PlayFabId);
+                }
+            }
+        }
+        */
         localPlayer = GameObject.Find("LocalPlayer");
         simpleChatView = Instantiate(chatUIManager.spawner_simple_message, new Vector3(0f,0f,0f), Quaternion.identity);
         simpleChatView.transform.SetParent(chatUIManager.Canvas.transform);
@@ -341,10 +366,9 @@ public class PlayerData : NetworkBehaviour
             isInputting = IsInputting;
         }
 
-        MoveAI();
-
         if(transform.position.x * 2 % 2 == 0 && transform.position.y * 2 % 2 == 0)
         {
+            MoveAI();
             Vector3 dist = transform.position;
             if(!PlayFabData.DictDistance.ContainsKey(this.PlayFabId))
             {
@@ -638,13 +662,15 @@ public class PlayerData : NetworkBehaviour
 
     private void MoveAI()
     {
-        deltaTime_API += Time.deltaTime;
+        // deltaTime_API += Time.deltaTime;
         deltaTime_move += Time.deltaTime;
+        /*
         if(deltaTime_API >= interval_API)
         {
             RPC_AddStateInfoRequest();
             deltaTime_API = 0f;
         }
+        */
 
         if (deltaTime_move >= interval_move && Q_nextInputs.Count > 0)
         {
@@ -686,9 +712,47 @@ public class PlayerData : NetworkBehaviour
             {
                 pm.OnMove(new Vector3(0f, pm._moveAmount, 0f), MyNetworkInput.InputType.FORWARD);
             }
+            if(Q_nextInputs.Count > 0)
+            {
+                if(Q_nextInputs.Peek() == dir && pm.IsNearChairTile(transform.position, dir))
+                {
+                    List<int> inputs = Q_nextInputs.ToList<int>();
+                    int nextDir = Q_nextInputs.Dequeue();
+                    if(nextDir == (int)MyNetworkInput.InputType.BACKWARD || nextDir == (int)MyNetworkInput.InputType.FORWARD)
+                    {
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.RIGHT);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.RIGHT);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.LEFT);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.LEFT);
+                        inputs.Insert(0, nextDir);
+                    }
+                    else
+                    {
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.BACKWARD);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.BACKWARD);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, nextDir);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.FORWARD);
+                        inputs.Insert(0, (int)MyNetworkInput.InputType.FORWARD);
+                        inputs.Insert(0, nextDir);
+                    }
+
+                    Q_nextInputs.Clear();
+                    foreach(var input in inputs)
+                    {
+                        Q_nextInputs.Enqueue(input);
+                    }
+                }
+            }
+
             deltaTime_move = 0f;
         }
     }
+
     [Rpc(RpcSources.All,RpcTargets.StateAuthority)]
     private async void RPC_AddStateInfoRequest()
     {

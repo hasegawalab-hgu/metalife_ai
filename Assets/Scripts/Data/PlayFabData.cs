@@ -58,6 +58,8 @@ public class PlayFabData : MonoBehaviour
     public static string MyYearLabSharedGroupId; // 自分の年度
     public static string CurrentSharedGroupId; // 現在入室しているルームのグループ、今後選択する画面を作成
     public static string CurrentAI;
+    public static List<Vector3> ChairPos = new List<Vector3>();
+    public static List<string> ChairOrder = new List<string>();
     public static Dictionary<string, ChannelData> CurrentRoomChannels = new Dictionary<string, ChannelData>();
     // public static Dictionary<string, string> CurrentRoomPlayers = new Dictionary<string, string>(); // key: id, value: displayName
     public static Dictionary<string, PlayerData> CurrentRoomPlayersRefs = new Dictionary<string,PlayerData>();

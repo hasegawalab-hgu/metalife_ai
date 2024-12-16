@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 1099567026257905611}
   - component: {fileID: 2808795239220463752}
   - component: {fileID: 7802193444972366917}
+  - component: {fileID: 3792709491280101084}
   m_Layer: 0
   m_Name: PlayerCaracter
   m_TagString: Untagged
@@ -201,6 +202,10 @@ MonoBehaviour:
   IsInTarget: 0
   _IsMainTarget: 0
   simpleChatView: {fileID: 0}
+  reactionObj: {fileID: 0}
+  ReactionNum: -1
+  ReactionSprite: {fileID: 0}
+  localPlayer: {fileID: 0}
   ps: {fileID: 0}
   MyMat: {fileID: 0}
   CheckMeetingRoomEntry: 0
@@ -222,6 +227,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e908d296bc14a4029a172a0dae925ede, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3792709491280101084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2038419205882741332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eabd56aaba884c49ab640baad645b9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  state: 0
 --- !u!1 &4916914195516734575
 GameObject:
   m_ObjectHideFlags: 0
