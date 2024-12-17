@@ -690,7 +690,7 @@ public class PlayerData : NetworkBehaviour
                 }
             }
             */
-            if(IsMainTarget)
+            if(IsMainTarget || !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
             {
                 return;
             }
@@ -714,7 +714,7 @@ public class PlayerData : NetworkBehaviour
             }
             if(Q_nextInputs.Count > 0)
             {
-                if(Q_nextInputs.Peek() == dir && pm.IsNearChairTile(transform.position, dir))
+                if(Q_nextInputs.Peek() == dir && pm.IsNearChairTile(transform.position, dir) && transform.position.x > 0)
                 {
                     List<int> inputs = Q_nextInputs.ToList<int>();
                     int nextDir = Q_nextInputs.Dequeue();
@@ -770,7 +770,7 @@ public class PlayerData : NetworkBehaviour
                 var playerData = playerContainer.transform.GetChild(i).GetComponent<PlayerData>();
                 if(!playerData.IsAI)
                 {
-                    Debug.Log(playerContainer.transform.GetChild(i).name);
+                    // Debug.Log(playerContainer.transform.GetChild(i).name);
                     playerData.UpdateListStateInfo(PlayFabData.DictListPlayerStateInfo, 30);
                 }
                 else 

@@ -11,7 +11,6 @@ using System.Threading;
 using UnityEditor.Rendering;
 using UnityEngine.Tilemaps;
 using TMPro;
-using UnityEditor.Experimental.GraphView;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -336,7 +335,7 @@ public class PlayerMovement : NetworkBehaviour
 
         List<int> inputs = new List<int>();
         count = 0;
-        Debug.Log(pd.PlayFabId + Mathf.Abs(x - targetPos.x) + Mathf.Abs(y - targetPos.y));
+        // Debug.Log(pd.PlayFabId + Mathf.Abs(x - targetPos.x) + Mathf.Abs(y - targetPos.y));
         int dist_x = Mathf.RoundToInt(Mathf.Abs(targetPos.x - x));
         int dist_y = Mathf.RoundToInt(Mathf.Abs(targetPos.y - y));
 
@@ -417,14 +416,14 @@ public class PlayerMovement : NetworkBehaviour
             s = string.Join(' ', inputs);
         }
 
-        Debug.Log(pd.PlayFabId + " targetPos.x:" + targetPos.x + " targetPos.y:" + targetPos.y + " x:" + x +  " y:" + y + " dist_x;" + dist_x + " dist_y:" + dist_y + " inputs:" + s);
+        // Debug.Log(pd.PlayFabId + " targetPos.x:" + targetPos.x + " targetPos.y:" + targetPos.y + " x:" + x +  " y:" + y + " dist_x;" + dist_x + " dist_y:" + dist_y + " inputs:" + s);
 
         foreach(var input in inputs)
         {
             float value = UnityEngine.Random.value;
-            if(value < 0.2)
+            if(value < 0.15)
             {
-                int num = UnityEngine.Random.Range(1, 4);
+                int num = UnityEngine.Random.Range(4, 12);
                 for(int i = 0; i < num; i++)
                 {
                     pd.Q_nextInputs.Enqueue(-1);

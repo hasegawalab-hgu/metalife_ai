@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.WebSockets;
+using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ public class RuleBaseAI : MonoBehaviour
     public State state = State.Idle;
 
     // 各Stateの選択確率（0.0〜1.0の範囲で設定）
-    private float[] stateProbabilities = { 0.1f, 0.00f, 0.3f, 0.1f, 0.00f, 0.5f }; // Idle, Chat, Sit, Follow, Question, Bored
+    private float[] stateProbabilities = { 0.1f, 0.00f, 0.4f, 0.0f, 0.00f, 0.5f }; // Idle, Chat, Sit, Follow, Question, Bored
 
 
     private float deltaTime = 0f;
@@ -33,7 +34,7 @@ public class RuleBaseAI : MonoBehaviour
     {
         pd = GetComponent<PlayerData>();
         pm = GetComponent<PlayerMovement>();
-        if(!pd.IsAI)
+        if(!pd.IsAI && !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
         {
             return;
         }
@@ -41,7 +42,7 @@ public class RuleBaseAI : MonoBehaviour
 
     void Update()
     {
-        if(!pd.IsAI)
+        if(!pd.IsAI && !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
         {
             return;
         }
@@ -58,7 +59,7 @@ public class RuleBaseAI : MonoBehaviour
                     float standardValue = 0.5f;
                     if(state == State.Sit)
                     {
-                        standardValue = 0.8f;
+                        standardValue = 0.7f;
                     }
                     if(value < standardValue)
                     {
@@ -85,7 +86,7 @@ public class RuleBaseAI : MonoBehaviour
                         OnSit();
                         break;
                     case State.Follow:
-                        OnFollow();
+                        // OnFollow();
                         break;
                     case State.Question:
                         break;
