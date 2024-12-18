@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using PlayFab;
+using PlayFab.ClientModels;
 using Newtonsoft.Json;
 using UnityEditor;
 
@@ -90,7 +91,8 @@ public class GPTSendChat : MonoBehaviour
             PlayFabData.CurrentAI = receiverId;
         }
 
-        PlayerData pd = PlayFabData.CurrentRoomPlayersRefs[receiverId].GetComponent<PlayerData>();
+        PlayerData pd = PlayFabData.CurrentRoomPlayersRefs[receiverId].GetComponent<PlayerData>();  
+        ChatSender cs = PlayFabData.CurrentRoomPlayersRefs[receiverId].GetComponent<ChatSender>();
 	
         // ユーザーのメッセージを表示するオブジェクトを生成
         var waitObj = Instantiate(chat_obj, new Vector3(0f, 0f, 0f), Quaternion.identity);
@@ -121,20 +123,30 @@ public class GPTSendChat : MonoBehaviour
             responseObj = Instantiate(chat_obj, new Vector3(0f, 0f, 0f), Quaternion.identity);
             // responseObj.GetComponent<Image>().color = new Color(1.0f, 1.0f, 1.0f, 0.3f);
             //GameObject Child_responce = responseObj.transform.GetChild(1).gameObject;
+            PlayFabClientAPI.GetTime(new GetTimeRequest(), 
+                result =>
+                {
+                    cs.RPC_SendMessageRequest(receiverId, PlayFabSettings.staticPlayer.PlayFabId, PlayFabData.CurrentChannelId, choice.message.content, result.Time.AddHours(9d).ToString("yyyy/MM/dd HH:mm:ss:ffff"));
+                },
+                _ => Debug.Log("時間取得失敗")
+            );
+            /*
             responseObj.GetComponent<TMP_Text>().text = choice.message.content;
             // 応答オブジェクトをコンテンツエリアの子要素として追加
             responseObj.transform.SetParent(content_obj.transform, false);
+            */
             pd.IsChatting = true;
         }
         else
         {
             responseObj.GetComponent<TMP_Text>().text = "";
         }
-
+        /*
         if(responseObj != null)
         {
             chatUIManager.StartCoroutine(chatUIManager.DeleteSimpleMessage(7.0f, responseObj.gameObject));
             pd.SetIsChattingDelay(true, 7.0f);
         }
+        */
     }
 }
