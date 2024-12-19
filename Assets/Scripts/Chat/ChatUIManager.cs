@@ -71,6 +71,8 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField]
     public List<Sprite> reactions = new List<Sprite>();
     private int reactionNum = -1;
+    [SerializeField]
+    public Toggle toggle_AI;
 
     // channel作成時に使用
     [SerializeField]
@@ -542,5 +544,18 @@ public class ChatUIManager : MonoBehaviour
         {
             lpd.RPC_SendReactionRequest(lpd.PlayFabId, reactionNum);
         }
+    }
+
+    public void OnValueChangedToggleAI()
+    {
+        if(toggle_AI.isOn)
+        {
+            PlayFabData.IsAI = true;
+        }
+        else
+        {
+            PlayFabData.IsAI = false;
+        }
+        Debug.Log(PlayFabData.IsAI);
     }
 }

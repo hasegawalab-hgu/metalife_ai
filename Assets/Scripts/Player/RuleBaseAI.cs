@@ -24,25 +24,24 @@ public class RuleBaseAI : MonoBehaviour
     public State state = State.Idle;
 
     // 各Stateの選択確率（0.0〜1.0の範囲で設定）
-    private float[] stateProbabilities = { 0.1f, 0.00f, 0.4f, 0.0f, 0.00f, 0.5f }; // Idle, Chat, Sit, Follow, Question, Bored
+    private float[] stateProbabilities = { 0.2f, 0.00f, 0.35f, 0.0f, 0.00f, 0.45f }; // Idle, Chat, Sit, Follow, Question, Bored
 
 
     private float deltaTime = 0f;
     private const float interval = 5f;
 
+    private PlayerData localPlayerData;
+
     void Start()
     {
         pd = GetComponent<PlayerData>();
         pm = GetComponent<PlayerMovement>();
-        if(!pd.IsAI && !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
-        {
-            return;
-        }
+        localPlayerData = GameObject.Find("LocalPlayer").GetComponent<PlayerData>();
     }
 
     void Update()
     {
-        if(!pd.IsAI && !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
+        if(!pd.IsAI && !localPlayerData.IsHost)
         {
             return;
         }
@@ -127,7 +126,7 @@ public class RuleBaseAI : MonoBehaviour
 
     private void OnIdleState()
     {
-        int value = Random.Range(3, 31);
+        int value = Random.Range(1, 13) * 10;
         for (int i = 0; i < value; i++)
         {
             pd.Q_nextInputs.Enqueue(-1);

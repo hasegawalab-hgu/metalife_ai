@@ -60,6 +60,10 @@ public class PlayerData : NetworkBehaviour
     public bool IsInputting { get; set;} = false;
     [Networked]
     public bool IsHost { get; set;} = false;
+    public bool GetIsHost()
+    {
+        return IsHost;
+    }
 
     private bool isInputting = false;
     public void SetIsInputting(bool isInputting)
@@ -318,7 +322,6 @@ public class PlayerData : NetworkBehaviour
 
     public void Update()
     {
-        
         if (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
         {
             IsAI = true;
@@ -368,7 +371,10 @@ public class PlayerData : NetworkBehaviour
 
         if(transform.position.x * 2 % 2 == 0 && transform.position.y * 2 % 2 == 0)
         {
-            MoveAI();
+            if(PlayFabData.IsAI)
+            {
+                MoveAI();
+            }
             Vector3 dist = transform.position;
             if(!PlayFabData.DictDistance.ContainsKey(this.PlayFabId))
             {
@@ -690,7 +696,7 @@ public class PlayerData : NetworkBehaviour
                 }
             }
             */
-            if(IsMainTarget || !PlayFabData.CurrentRoomPlayersRefs[PlayFabSettings.staticPlayer.PlayFabId].IsHost)
+            if(IsMainTarget || !localPlayer.GetComponent<PlayerData>().IsHost)
             {
                 return;
             }
