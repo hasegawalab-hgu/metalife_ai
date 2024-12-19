@@ -78,7 +78,7 @@ public class ChatSender : NetworkBehaviour
             Invoke("IsChattingOff", 7f);
 
             // chatgpt
-            if(senderId == PlayFabSettings.staticPlayer.PlayFabId && GameObject.Find(receiverId).GetComponent<PlayerData>().IsOnline == false)
+            if(PlayFabData.IsAI && senderId == PlayFabSettings.staticPlayer.PlayFabId && GameObject.Find(receiverId).GetComponent<PlayerData>().IsOnline == false)
             {
                 gsc.SendMessageRequest(receiverId, messageData.Content, GameObject.Find(receiverId).GetComponent<PlayerData>().simpleChatView.transform.GetChild(0).transform.GetChild(0).transform.gameObject);
             }
