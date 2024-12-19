@@ -102,6 +102,17 @@ public class PlayFabLogin : PlayFabLoginAndSignup
         // フォーマット
         string timeStr = $"{hours:D2}:{minutes:D2}:{secs:D2}";
         PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+        PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+        // 保存
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>
+            {
+                {"Login", JsonConvert.SerializeObject(PlayFabData.DictLoginTime)},
+            }
+        };
+        PlayFabClientAPI.UpdateUserData(request, result => Debug.Log("ログイン時間更新成功"), error => {Debug.Log("ログイン時間の更新失敗" + error.GenerateErrorReport());});
+        
 
         /*
         if (result.InfoResultPayload.UserData["IsOnline"].Value == "True")
@@ -198,6 +209,17 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             // フォーマット
             string timeStr = $"{hours:D2}:{minutes:D2}:{secs:D2}";
             PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+            PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+            // 保存
+            var request = new UpdateUserDataRequest
+            {
+                Data = new Dictionary<string, string>
+                {
+                    {"Login", JsonConvert.SerializeObject(PlayFabData.DictLoginTime)},
+                }
+            };
+            PlayFabClientAPI.UpdateUserData(request, result => Debug.Log("ログイン時間更新成功"), error => {Debug.Log("ログイン時間の更新失敗" + error.GenerateErrorReport());});
+            
 
             Debug.Log("カスタムIDでのログイン成功 " + PlayFabData.MyName);
 
