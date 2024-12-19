@@ -86,6 +86,23 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             // PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
         }
 
+        if(result.InfoResultPayload.UserData.ContainsKey("Login"))
+        {
+            PlayFabData.DictLoginTime = JsonConvert.DeserializeObject<Dictionary<string, string>>(result.InfoResultPayload.UserData["Login"].Value);
+        }
+
+        int now = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + 3600 * 9; // 日本時間
+        DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(now);
+        PlayFabData.LoginStartTime = dateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss");
+        int time = Mathf.FloorToInt(PlayFabData.LoginTime);
+        int hours = time / 3600;
+        int minutes = (time % 3600) / 60;
+        int secs = time % 60;
+
+        // フォーマット
+        string timeStr = $"{hours:D2}:{minutes:D2}:{secs:D2}";
+        PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+
         /*
         if (result.InfoResultPayload.UserData["IsOnline"].Value == "True")
         {
@@ -164,6 +181,23 @@ public class PlayFabLogin : PlayFabLoginAndSignup
             {
                 // PlayFabData.MyTexturePath = result.InfoResultPayload.UserData["CharacterPath"].Value;
             }
+
+            if(result.InfoResultPayload.UserData.ContainsKey("Login"))
+            {
+                PlayFabData.DictLoginTime = JsonConvert.DeserializeObject<Dictionary<string, string>>(result.InfoResultPayload.UserData["Login"].Value);
+            }
+
+            int now = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + 3600 * 9; // 日本時間
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(now);
+            PlayFabData.LoginStartTime = dateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss");
+            int time = Mathf.FloorToInt(PlayFabData.LoginTime);
+            int hours = time / 3600;
+            int minutes = (time % 3600) / 60;
+            int secs = time % 60;
+
+            // フォーマット
+            string timeStr = $"{hours:D2}:{minutes:D2}:{secs:D2}";
+            PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
 
             Debug.Log("カスタムIDでのログイン成功 " + PlayFabData.MyName);
 

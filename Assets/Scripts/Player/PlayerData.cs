@@ -213,7 +213,11 @@ public class PlayerData : NetworkBehaviour
             // stateInfo
             int now = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + 3600 * 9; // 日本時間
             PlayFabData.DictPlayerStateInfos[this.PlayFabId] = new PlayerStateInfo(now, this.DisplayName, this.transform.position, pm.CurrentInputType, this.IsAI, this.IsChatting, "", this.isInputting, this.ReactionNum, this.Q_moveLog.ToArray());
-
+            /*
+            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(now);
+            PlayFabData.LoginStartTime = dateTimeOffset.ToString("yyyy-MM-dd HH:mm:ss");
+            PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = PlayFabData.LoginTime.ToString();
+            */
             LoadTexture();
             CheckDoubleLogin();
         }
@@ -322,6 +326,34 @@ public class PlayerData : NetworkBehaviour
 
     public void Update()
     {
+        if(this.PlayFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        {
+            PlayFabData.LoginTime += Time.deltaTime;
+            PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = PlayFabData.LoginTime.ToString();
+            if(PlayFabData.LoginTime > PlayFabData.SaveLoginTimeDuration)
+            {
+                int time = Mathf.FloorToInt(PlayFabData.LoginTime);
+                int hours = time / 3600;
+                int minutes = (time % 3600) / 60;
+                int secs = time % 60;
+
+                // フォーマット
+                string timeStr = $"{hours:D2}:{minutes:D2}:{secs:D2}";
+                PlayFabData.DictLoginTime[PlayFabData.LoginStartTime] = timeStr;
+                // 保存
+                var request = new UpdateUserDataRequest
+                {
+                    Data = new Dictionary<string, string>
+                    {
+                        {"Login", JsonConvert.SerializeObject(PlayFabData.DictLoginTime)},
+                    }
+                };
+                PlayFabClientAPI.UpdateUserData(request, result => Debug.Log("ログイン時間更新成功"), error => {Debug.Log("ログイン時間の更新失敗" + error.GenerateErrorReport());});
+                
+                PlayFabData.SaveLoginTimeDuration += 30f;
+            }
+        }
+
         if (GetComponent<NetworkObject>().InputAuthority == default(PlayerRef))
         {
             IsAI = true;

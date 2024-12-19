@@ -77,6 +77,10 @@ public class PlayFabData : MonoBehaviour
     public static int PlayerStateInfoLength {private set; get; } = 3;
     public static Dictionary<string, List<MessageData>> DictAllMessageDatas = new Dictionary<string, List<MessageData>>();
     public static List<Distance> LocalPlayerTargets = new List<Distance>();
+    public static Dictionary<string, string> DictLoginTime = new Dictionary<string, string>();
+    public static string LoginStartTime = "";
+    public static float LoginTime = 0f;
+    public static float SaveLoginTimeDuration = 30f;
 
     public static void Initialize()
     {
@@ -98,5 +102,9 @@ public class PlayFabData : MonoBehaviour
         DictListPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
         DictListLatestPlayerStateInfo = new Dictionary<string, List<PlayerStateInfo>>();
         LocalPlayerTargets = new List<Distance>();
+        DictLoginTime = new Dictionary<string, string>();
+        LoginStartTime = "";
+        LoginTime = 0f;
+        SaveLoginTimeDuration = 30f;
     }
 }
