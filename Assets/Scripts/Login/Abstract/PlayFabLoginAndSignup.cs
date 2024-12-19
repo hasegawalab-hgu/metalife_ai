@@ -223,6 +223,10 @@ public class PlayFabLoginAndSignup : MonoBehaviour
 
     public void OnSwitchToLogin()
     {
+        // ログイン情報を削除する
+        PlayFabSettings.staticPlayer.ForgetAllCredentials();
+        PlayFabData.Initialize();
+
         signUpUI.SetActive(false);
         initialSettingUI.SetActive(false);
         fusion.SetActive(false);
