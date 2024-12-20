@@ -157,6 +157,8 @@ public class PlayerData : NetworkBehaviour
     public Queue<int> Q_nextInputs = new Queue<int>();
     public Queue<int> Q_moveLog = new Queue<int>();
 
+    ChatNotificationSound NotificationSound;
+
     private void Awake()
     {
         playerContainer = GameObject.Find("Players");
@@ -183,6 +185,7 @@ public class PlayerData : NetworkBehaviour
         transform.SetParent(playerContainer.transform);
         pm = GetComponent<PlayerMovement>();
         gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
+        NotificationSound = FindObjectOfType<ChatNotificationSound>();
         // Invoke("a", 0.1f);
 
         if(Object.HasInputAuthority)
@@ -1149,6 +1152,32 @@ public class PlayerData : NetworkBehaviour
             image.color = new Color(255, 255, 255, 255);
             image.sprite = chatUIManager.reactions[reactionNum];
             Invoke("DeleteReaction", 5f);
+        }
+        //通知音を再生(受信時のみ)
+        if(playFabId == PlayFabSettings.staticPlayer.PlayFabId)
+        {
+            if (NotificationSound != null)
+            {
+                NotificationSound.PlayNotificationSound();
+            }
+            else
+            {
+                Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+            }
+        }
+        else
+        {
+            if(GameObject.Find(playFabId).GetComponent<PlayerData>().Targets[0].Id == this.PlayFabId)
+            {
+                if (NotificationSound != null)
+                {
+                    NotificationSound.PlayNotificationSound();
+                }
+                else
+                {
+                    Debug.LogWarning("通知音用のAudioSourceが設定されていません。");
+                }
+            }
         }
     }
 

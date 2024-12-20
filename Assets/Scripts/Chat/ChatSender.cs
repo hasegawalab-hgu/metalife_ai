@@ -16,6 +16,7 @@ public class ChatSender : NetworkBehaviour
     private ChatManager chatManager;
     private ChatUIManager chatUIManager;
     private GPTSendChat gsc;
+    ChatNotificationSound NotificationSound;
 
     void Start()
     {
@@ -23,6 +24,7 @@ public class ChatSender : NetworkBehaviour
         chatManager = GameObject.Find("ChatManager").GetComponent<ChatManager>();
         chatUIManager = GameObject.Find("ChatManager").GetComponent<ChatUIManager>();
         gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
+        NotificationSound = GameObject.Find("ChatSound").GetComponent<ChatNotificationSound>();
     }
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
@@ -61,7 +63,6 @@ public class ChatSender : NetworkBehaviour
             //通知音を再生(受信時のみ)
             if (senderId != PlayFabSettings.staticPlayer.PlayFabId) //受信者の場合に音を鳴らす
             {
-                ChatNotificationSound NotificationSound = FindObjectOfType<ChatNotificationSound>();
                 if (NotificationSound != null)
                 {
                     NotificationSound.PlayNotificationSound();
