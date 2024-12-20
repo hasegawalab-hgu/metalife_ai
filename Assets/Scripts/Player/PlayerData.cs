@@ -752,7 +752,7 @@ public class PlayerData : NetworkBehaviour
             }
             if(Q_nextInputs.Count > 0)
             {
-                if(Q_nextInputs.Peek() == dir && pm.IsNearChairTile(transform.position, dir) && transform.position.x > 0)
+                if(Q_nextInputs.Peek() == dir && pm.IsNearChairTile(transform.position, dir) && transform.position.x >= -2)
                 {
                     List<int> inputs = Q_nextInputs.ToList<int>();
                     int nextDir = Q_nextInputs.Dequeue();

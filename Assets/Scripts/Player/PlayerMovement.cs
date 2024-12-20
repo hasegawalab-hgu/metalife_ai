@@ -328,7 +328,7 @@ public class PlayerMovement : NetworkBehaviour
         Debug.Log("OnCollition2D: " + collision.gameObject.name);
     }
 
-    public void MoveToTargetPos(Vector3 currentPos, Vector3 targetPos, int lastDir)
+    public void MoveToTargetPos(Vector3 currentPos, int firstPos, Vector3 targetPos, int lastDir)
     {
         float x = currentPos.x;
         float y = currentPos.y;
@@ -343,7 +343,7 @@ public class PlayerMovement : NetworkBehaviour
         {
             if(x > targetPos.x)
             {
-                if(i == 0 && CurrentInputType != (int)MyNetworkInput.InputType.LEFT)
+                if(i == 0 && firstPos != (int)MyNetworkInput.InputType.LEFT)
                 {
                     inputs.Add((int)MyNetworkInput.InputType.LEFT);
                 }
@@ -351,7 +351,7 @@ public class PlayerMovement : NetworkBehaviour
             }
             else
             {
-                if(i == 0 && CurrentInputType != (int)MyNetworkInput.InputType.RIGHT)
+                if(i == 0 && firstPos != (int)MyNetworkInput.InputType.RIGHT)
                 {
                     inputs.Add((int)MyNetworkInput.InputType.RIGHT);
                 }
@@ -397,7 +397,7 @@ public class PlayerMovement : NetworkBehaviour
         }
         if(inputs.Count == 0)
         {
-            if(CurrentInputType != lastDir && lastDir >= 0 && lastDir < 4)
+            if(firstPos != lastDir && lastDir >= 0 && lastDir < 4)
             {
                 inputs.Add(lastDir);
             }

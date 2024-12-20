@@ -136,7 +136,23 @@ public class RuleBaseAI : MonoBehaviour
     private void OnSit()
     {
         Vector3 targetPos = PlayFabData.ChairPos[transform.GetSiblingIndex()];
-        pm.MoveToTargetPos(transform.position, targetPos, (int)MyNetworkInput.InputType.RIGHT);
+        if(transform.position.x < -2)
+        {
+            if(transform.position.y < 21)
+            {
+                pm.MoveToTargetPos(transform.position, pm.CurrentInputType, new Vector3(-2, 16), (int)MyNetworkInput.InputType.RIGHT);
+                pm.MoveToTargetPos(new Vector3(-2, 16), (int)MyNetworkInput.InputType.RIGHT, targetPos, (int)MyNetworkInput.InputType.RIGHT);
+            }
+            else
+            {
+                pm.MoveToTargetPos(transform.position, pm.CurrentInputType, new Vector3(-2, 27), (int)MyNetworkInput.InputType.RIGHT);
+                pm.MoveToTargetPos(new Vector3(-2, 27), (int)MyNetworkInput.InputType.RIGHT, targetPos, (int)MyNetworkInput.InputType.RIGHT);
+            }
+        }
+        else
+        {
+            pm.MoveToTargetPos(transform.position, pm.CurrentInputType, targetPos, (int)MyNetworkInput.InputType.RIGHT);
+        }
     }
 
     private void OnFollow()
@@ -152,7 +168,7 @@ public class RuleBaseAI : MonoBehaviour
             }
         }
 
-        pm.MoveToTargetPos(transform.position, PlayFabData.CurrentRoomPlayersRefs[nearTarget].transform.position, -1);
+        pm.MoveToTargetPos(transform.position, pm.CurrentInputType, PlayFabData.CurrentRoomPlayersRefs[nearTarget].transform.position, -1);
     }
 
     private void OnBored()
@@ -160,6 +176,6 @@ public class RuleBaseAI : MonoBehaviour
         int x = Random.Range(-6, 6);
         int y = Random.Range(-6, 6);
         Vector3 targetPos = transform.position + new Vector3(x, y, 0f);
-        pm.MoveToTargetPos(transform.position, targetPos, -1);
+        pm.MoveToTargetPos(transform.position, pm.CurrentInputType, targetPos, -1);
     }
 }
