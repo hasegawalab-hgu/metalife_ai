@@ -185,7 +185,7 @@ public class PlayerData : NetworkBehaviour
         transform.SetParent(playerContainer.transform);
         pm = GetComponent<PlayerMovement>();
         gsc = GameObject.Find("ChatGPT").GetComponent<GPTSendChat>();
-        NotificationSound = FindObjectOfType<ChatNotificationSound>();
+        NotificationSound = GameObject.Find("ChatSound").GetComponent<ChatNotificationSound>();
         // Invoke("a", 0.1f);
 
         if(Object.HasInputAuthority)
