@@ -74,7 +74,7 @@ public class DMButton : MonoBehaviour
                 //outline.color = Color.green;
                 if(text.color != Color.green)
                 {
-                    text.color = Color.green;
+                    // text.color = Color.green;
                 }
             }
             else
