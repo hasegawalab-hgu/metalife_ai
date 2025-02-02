@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baa746bbf00393a459ff3fbb0711ee55, type: 3}
   m_Name: Lobby
   m_EditorClassIdentifier: 
-  Name: Lobby
-  ID: 0
+  Name: hasegawa_lab_2024
+  ID: 1
   Target: 0
   MaxClients: 20
   SceneIndex: 1
