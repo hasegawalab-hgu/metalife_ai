@@ -37,11 +37,13 @@ sysinfo.txt
 *.unitypackage
 
 # Visual Studio
-.vs
+*.vs
+
 Release/
 Debug/
 
 
-.fake
-.DS_Store
-.vscode
+*.fake
+*.DS_Store
+*.vscode
+*.vsconfig
