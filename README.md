@@ -1,4 +1,5 @@
-# Gather_Lab（仮称）
+# MetaLife_AI
+
 更新履歴  
 2025年 2月14日 by 長井（偉大な初代開発者！！！！）  
   
@@ -38,9 +39,10 @@ brew install git
 brew install git-lfs
 ```
 
-### プロジェクトファイルダウンロード（githubにリポジトリがある場合）
+### リポジトリのクローン
+ワーキングディレクトリで
 ```
-git clone <リポジトリ>
+git clone git@github.com:hasegawalab-hgu/metalife_ai.git
 ```
 ### PhotonFusion初期設定
 unityでプロジェクトを開いて、上部の`Tools`ボタンから`Fusion`、`Fusion Hub`を開いて
@@ -58,10 +60,10 @@ unityの上部の`PlayFab`ボタンを押して、`MakePlayFabSharedSettings`を
 ```
 を入力（これは今後環境変数から取得するようにした方がいいかも）
 
-### zipファイル解凍（githubにリポジトリがなく、zipファイルを渡された場合）
+### ~~zipファイル解凍（githubにリポジトリがなく、zipファイルを渡された場合）~~
 先生からもらったzipファイルをワーキングディレクトリ（テキトーに作って）で解凍
 ```
-cd Gather_Lab
+cd metalife_ai
 ```
 ```
 git init
@@ -72,9 +74,52 @@ git lfs install
 gitだけでなくgithubにリポジトリを上げて管理することをおすすめする。（リポジトリはpublicではなくprivateで管理！）  
 main → develop → feature のように管理して、機能ごとにdevelopからfeatureブランチを作成し、それをdevelopにmergeする方法が楽だし管理しやすい。  
 
+例.）
+`feature/hogehoge`というfeatureブランチをdevelopブランチから新規作成し、開発（コミット）した内容をdevelopブランチにマージするとき
+- 現在のブランチ確認
+```
+git branch
+```
+```
+ ~~~出力例~~~
+  develop
+* feature/fix-readme　←*がついてるのが現在のブランチだよ
+  feature/room_select
+  main
+```
+- ブランチ変更
+```
+git checkout develop
+```
+
+```
+git checkout -b feature/hogehoge ← -bオプションをつけるとブランチの新規作成できるよ
+```
+- 開発してコミットする
+コマンドでもできるけど私は[vscodeのgit拡張機能使う方法](https://zenn.dev/praha/articles/db1c4bcc4ef48c)が好き
+- developブランチにfeatureブランチをマージ
+```
+git checkout develop
+```
+```
+git merge --no-ff feature/hogehoge ← --no-ff オプションをつけるとマージしたときのコミットとして履歴が残るよ
+```
+
+<details>
+<summary>覚えておくといいgit コマンド一覧</summary>
+・ git reflog ← gitの操作が巻き戻せるよ！！！！！<br>
+・ git stash ← 前回コミットした内容まで変更内容を消せるよ（git stash applyで復元）<br>
+・ git stash save "" ← 名前を付けてsatshの内容を保存できるよ（ブランチ間違えた時とかに便利！）<br>
+・ git stash apply ← git stash で保存した内容を復元できるよ！<br>
+・ git reset --soft ← 直近のコミットを戻したいけど変更したファイルはそのままにしたいときに使うよ<br>
+・ git reset --hard ← コミットを戻して変更内容も消せるよ<br>
+・ git rebase ← 少し遠めのコミットの内容を変更できるよ<br>
+</details>
+
+
 ※ この時featureブランチで明らかなバグが残っているままmergeしないでください、本当にお願いします。通信を使用したシステムなのでデバッグ大変なんですお願いします。（まあrevertすればいいんだけどね）
 
-### リモートリポジトリ作成
+### ~~リモートリポジトリ作成~~
 https://github.com/new でリモートリポジトリの作成ができる。  
 この時以下の点に注意すること。  
 
@@ -189,7 +234,7 @@ https://prog-8.com/docs/git-env などの好きな方法でやればいい。
 ## Q & A
 2025/02/14現在は初代開発者しかこのプロジェクトの中身を理解していないので私に聞いてください。暇だったら回答します。
 
-https://gist.github.com/ahaha88/4f4c68cb4e3e054c6da2a5e2a1612c31
+https://github.com/hasegawalab-hgu/metalife_ai/issues/1
 
 ### 想定される質問
 **Q: ルームに接続できません**  
